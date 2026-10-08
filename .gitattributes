@@ -1,0 +1,10 @@
+* text=auto
+*.java text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.xml text eol=lf
+*.png binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.icns binary

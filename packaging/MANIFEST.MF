@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Created-By: Logisim Sky UI build
+Main-Class: com.cburch.logisim.Main
+Implementation-Title: Logisim Sky
+Implementation-Version: 1.0
+Multi-Release: true
+

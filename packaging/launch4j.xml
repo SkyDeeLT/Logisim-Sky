@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>dist/Logisim-Sky-1.0.jar</jar>
+  <outfile>dist/Logisim-Sky-1.0-Windows-x64.exe</outfile>
+  <errTitle>Logisim Sky</errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>https://adoptium.net/</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon></icon>
+  <jre>
+    <path></path>
+    <requiresJdk>false</requiresJdk>
+    <requires64Bit>false</requires64Bit>
+    <minVersion>1.8.0</minVersion>
+    <maxVersion></maxVersion>
+  </jre>
+  <versionInfo>
+    <fileVersion>1.0.0.0</fileVersion>
+    <txtFileVersion>1.0.0</txtFileVersion>
+    <fileDescription>Logisim Sky</fileDescription>
+    <copyright>Logisim contributors</copyright>
+    <productVersion>1.0.0.0</productVersion>
+    <txtProductVersion>1.0.0</txtProductVersion>
+    <productName>Logisim Sky</productName>
+    <companyName>Logisim Sky</companyName>
+    <internalName>LogisimSky</internalName>
+    <originalFilename>Logisim-Sky-1.0-Windows-x64.exe</originalFilename>
+  </versionInfo>
+</launch4jConfig>

@@ -1,0 +1,23 @@
+Logisim Sky 1.0 third-party notices
+===================================
+
+FlatLaf 3.6.2
+Copyright 2019-2025 FormDev Software GmbH
+License: Apache License 2.0
+Source and documentation: https://github.com/JFormDesigner/FlatLaf
+
+The full FlatLaf license text is included as:
+licenses/FlatLaf-LICENSE.txt
+
+Launch4j 3.50
+Copyright Grzegorz Kowal
+License: BSD 3-Clause
+Source and documentation: https://launch4j.sourceforge.net/
+
+Launch4j is used only to create the Windows launcher. Its license text is
+included as:
+licenses/Launch4j-LICENSE.txt
+
+Logisim and the Logisim Sky derivative remain distributed under the GNU
+General Public License, version 2 or (at your option) any later version.
+See COPYING.TXT and the source headers.

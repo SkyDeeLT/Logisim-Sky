@@ -1,0 +1,32 @@
+# Build output
+build/
+dist/
+out/
+target/
+
+# Local dependency binaries
+lib/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Java
+*.class
+hs_err_pid*
+
+# Release binaries - publish these through GitHub Releases
+*.exe
+*.dmg
+*.pkg
+*.app
+*.zip
