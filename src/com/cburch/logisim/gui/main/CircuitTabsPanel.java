@@ -90,5 +90,9 @@ public final class CircuitTabsPanel extends JPanel implements ProjectListener, L
     }
 
     public void libraryChanged(LibraryEvent event) { rebuild(); }
-    public void circuitChanged(CircuitEvent event) { rebuild(); }
+
+    public void circuitChanged(CircuitEvent event) {
+        // Simulation also fires component invalidations from its worker thread.
+        if (event.getAction() == CircuitEvent.ACTION_SET_NAME) rebuild();
+    }
 }

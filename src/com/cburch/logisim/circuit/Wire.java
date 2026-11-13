@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.comp.Component;
 import com.cburch.logisim.comp.ComponentFactory;
 import com.cburch.logisim.comp.ComponentDrawContext;
@@ -193,7 +194,7 @@ public final class Wire implements Component, AttributeSet, CustomHandles,
 		Graphics g = context.getGraphics();
 
 		GraphicsUtil.switchToWidth(g, WIDTH);
-		g.setColor(state.getValue(e0).getColor());
+		g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(e0)));
 		g.drawLine(e0.getX(), e0.getY(),
 			e1.getX(), e1.getY());
 	}

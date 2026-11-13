@@ -127,8 +127,8 @@ class AppearanceOptions extends OptionsPanel {
                 DarkTheme.scale(18), DarkTheme.scale(20)));
 
         themes = new ThemeDef[] {
-                new ThemeDef(DarkTheme.THEME_DARK, "Midnight",
-                        new Color(17, 24, 34), new Color(28, 39, 50), new Color(101, 177, 255)),
+                new ThemeDef(DarkTheme.THEME_DARK, "Dark",
+                        new Color(19, 19, 19), new Color(29, 29, 29), new Color(211, 211, 211)),
                 new ThemeDef(DarkTheme.THEME_LIGHT, "Light",
                         new Color(251, 253, 255), new Color(232, 240, 250), new Color(37, 99, 235)),
                 new ThemeDef(DarkTheme.THEME_AURORA, "Aurora",
@@ -290,7 +290,7 @@ class AppearanceOptions extends OptionsPanel {
         animationsToggle.setText(ru ? "Плавная анимация градиента рабочей области" : "Animate workspace gradient");
         liveAnalysisToggle.setText(ru ? "Показывать Live-анализ справа" : "Show Live Analysis on the right");
         previewLabel.setText(ru ? "Предпросмотр рабочей области" : "Workspace preview");
-        themes[0].name = ru ? "Midnight" : "Midnight";
+        themes[0].name = ru ? "Тёмная" : "Dark";
         themes[1].name = ru ? "Светлая" : "Light";
         themes[2].name = "Aurora";
         themes[3].name = "Ocean";

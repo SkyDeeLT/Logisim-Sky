@@ -27,93 +27,93 @@
   </toolbar>
   <circuit name="main">
     <a name="circuit" val="main" />
-    <comp name="Pin" loc="(100,170)" lib="0">
+    <comp name="Pin" loc="(100,210)" lib="0">
       <a name="label" val="A" />
       <a name="width" val="1" />
       <a name="tristate" val="false" />
     </comp>
-    <wire from="(100,170)" to="(120,170)" />
-    <comp name="Tunnel" loc="(120,170)" lib="0">
+    <wire from="(100,210)" to="(120,210)" />
+    <comp name="Tunnel" loc="(120,210)" lib="0">
       <a name="label" val="A" />
       <a name="facing" val="west" />
       <a name="width" val="1" />
     </comp>
-    <comp name="Pin" loc="(100,230)" lib="0">
+    <comp name="Pin" loc="(100,270)" lib="0">
       <a name="label" val="B" />
       <a name="width" val="1" />
       <a name="tristate" val="false" />
     </comp>
-    <wire from="(100,230)" to="(120,230)" />
-    <comp name="Tunnel" loc="(120,230)" lib="0">
+    <wire from="(100,270)" to="(120,270)" />
+    <comp name="Tunnel" loc="(120,270)" lib="0">
       <a name="label" val="B" />
       <a name="facing" val="west" />
       <a name="width" val="1" />
     </comp>
-    <comp name="Power" loc="(310,80)" lib="0" />
-    <comp name="Ground" loc="(310,320)" lib="0" />
-    <comp name="Transistor" loc="(310,190)" lib="0">
+    <comp name="Power" loc="(330,90)" lib="0" />
+    <comp name="Ground" loc="(330,390)" lib="0" />
+    <comp name="Transistor" loc="(330,220)" lib="0">
       <a name="type" val="p" />
       <a name="facing" val="south" />
       <a name="gate" val="tl" />
     </comp>
-    <comp name="Transistor" loc="(310,140)" lib="0">
+    <comp name="Transistor" loc="(330,160)" lib="0">
       <a name="type" val="p" />
       <a name="facing" val="south" />
       <a name="gate" val="tl" />
     </comp>
-    <wire from="(310,80)" to="(310,100)" />
-    <wire from="(310,140)" to="(310,150)" />
-    <wire from="(310,190)" to="(310,200)" />
-    <comp name="Tunnel" loc="(270,120)" lib="0">
+    <wire from="(330,90)" to="(330,120)" />
+    <wire from="(330,160)" to="(330,180)" />
+    <wire from="(330,220)" to="(330,240)" />
+    <comp name="Tunnel" loc="(280,140)" lib="0">
       <a name="label" val="A" />
       <a name="facing" val="east" />
       <a name="width" val="1" />
     </comp>
-    <wire from="(270,120)" to="(290,120)" />
-    <comp name="Tunnel" loc="(270,170)" lib="0">
+    <wire from="(280,140)" to="(310,140)" />
+    <comp name="Tunnel" loc="(280,200)" lib="0">
       <a name="label" val="B" />
       <a name="facing" val="east" />
       <a name="width" val="1" />
     </comp>
-    <wire from="(270,170)" to="(290,170)" />
-    <comp name="Transistor" loc="(280,220)" lib="0">
+    <wire from="(280,200)" to="(310,200)" />
+    <comp name="Transistor" loc="(290,270)" lib="0">
       <a name="type" val="n" />
       <a name="facing" val="north" />
       <a name="gate" val="tl" />
     </comp>
-    <comp name="Transistor" loc="(340,220)" lib="0">
+    <comp name="Transistor" loc="(370,270)" lib="0">
       <a name="type" val="n" />
       <a name="facing" val="north" />
       <a name="gate" val="br" />
     </comp>
-    <wire from="(280,220)" to="(280,200)" />
-    <wire from="(280,200)" to="(310,200)" />
-    <wire from="(310,200)" to="(340,200)" />
-    <wire from="(340,200)" to="(340,220)" />
-    <wire from="(280,260)" to="(280,280)" />
-    <wire from="(280,280)" to="(310,280)" />
-    <wire from="(310,280)" to="(340,280)" />
-    <wire from="(340,280)" to="(340,260)" />
-    <wire from="(310,280)" to="(310,320)" />
-    <comp name="Tunnel" loc="(240,240)" lib="0">
+    <wire from="(290,270)" to="(290,240)" />
+    <wire from="(290,240)" to="(330,240)" />
+    <wire from="(330,240)" to="(370,240)" />
+    <wire from="(370,240)" to="(370,270)" />
+    <wire from="(290,310)" to="(290,340)" />
+    <wire from="(290,340)" to="(330,340)" />
+    <wire from="(330,340)" to="(370,340)" />
+    <wire from="(370,340)" to="(370,310)" />
+    <wire from="(330,340)" to="(330,390)" />
+    <comp name="Tunnel" loc="(240,290)" lib="0">
       <a name="label" val="A" />
       <a name="facing" val="east" />
       <a name="width" val="1" />
     </comp>
-    <wire from="(240,240)" to="(260,240)" />
-    <wire from="(360,240)" to="(380,240)" />
-    <comp name="Tunnel" loc="(380,240)" lib="0">
+    <wire from="(240,290)" to="(270,290)" />
+    <wire from="(390,290)" to="(420,290)" />
+    <comp name="Tunnel" loc="(420,290)" lib="0">
       <a name="label" val="B" />
       <a name="facing" val="west" />
       <a name="width" val="1" />
     </comp>
-    <comp name="Pin" loc="(420,200)" lib="0">
+    <comp name="Pin" loc="(460,240)" lib="0">
       <a name="label" val="Y" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(340,200)" to="(420,200)" />
+    <wire from="(370,240)" to="(460,240)" />
   </circuit>
 </project>

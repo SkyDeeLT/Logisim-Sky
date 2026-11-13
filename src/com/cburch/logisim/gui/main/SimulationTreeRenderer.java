@@ -45,7 +45,7 @@ public class SimulationTreeRenderer extends DefaultTreeCellRenderer {
 				int ty = y + 13;
 				int[] xp = { tx - 1, x + 18, x + 20, tx + 1 };
 				int[] yp = { ty + 1, y + 20, y + 18, ty - 1 };
-				g.setColor(ProjectExplorer.MAGNIFYING_INTERIOR);
+				g.setColor(DarkTheme.SELECTION);
 				g.fillOval(x + 5, y + 5, 10, 10);
 				g.setColor(DarkTheme.FOREGROUND);
 				g.drawOval(x + 5, y + 5, 10, 10);

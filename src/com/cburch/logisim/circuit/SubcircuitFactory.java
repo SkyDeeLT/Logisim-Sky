@@ -17,6 +17,7 @@ import java.util.Map;
 import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.comp.Component;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeSet;
@@ -263,7 +264,9 @@ public class SubcircuitFactory extends InstanceFactory {
 		Direction defaultFacing = source.getAppearance().getFacing();
 		Location loc = painter.getLocation();
 		g.translate(loc.getX(), loc.getY());
-		source.getAppearance().paintSubcircuit(g, facing);
+		Color outline = DarkTheme.getCircuitForeground(painter.isPrintView());
+		source.getAppearance().paintSubcircuit(g, facing, outline);
+		g.setColor(outline);
 		drawCircuitLabel(painter, getOffsetBounds(attrs), facing, defaultFacing);
 		g.translate(-loc.getX(), -loc.getY());
 		painter.drawLabel();

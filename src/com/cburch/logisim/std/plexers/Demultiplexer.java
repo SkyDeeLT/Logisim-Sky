@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 import com.cburch.logisim.LogisimVersion;
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.BitWidth;
@@ -279,7 +280,7 @@ public class Demultiplexer extends InstanceFactory {
 				halign, GraphicsUtil.V_BASELINE);
 
 		// draw trapezoid, "DMX" label, and ports
-		g.setColor(Color.BLACK);
+		g.setColor(DarkTheme.getCircuitForeground(painter.isPrintView()));
 		Plexers.drawTrapezoid(g, bds, facing.reverse(), select.getWidth() == 1 ? 10 : 20);
 		GraphicsUtil.drawCenteredText(g, "DMX",
 				bds.getX() + bds.getWidth() / 2,

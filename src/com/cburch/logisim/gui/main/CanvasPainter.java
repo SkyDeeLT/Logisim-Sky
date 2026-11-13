@@ -5,6 +5,7 @@ package com.cburch.logisim.gui.main;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -34,6 +35,7 @@ import com.cburch.logisim.util.GraphicsUtil;
 
 class CanvasPainter implements PropertyChangeListener {
 	private static final Set<Component> NO_COMPONENTS = Collections.emptySet();
+	private static final Font CIRCUIT_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
 
 	private Canvas canvas;
 	private GridPainter grid;
@@ -129,6 +131,8 @@ class CanvasPainter implements PropertyChangeListener {
 		g.setColor(DarkTheme.FOREGROUND);
 
 		Graphics gScaled = g.create();
+		// Component markings use circuit units, independent of the Swing UI scale.
+		gScaled.setFont(CIRCUIT_FONT);
 		if (zoomFactor != 1.0 && gScaled instanceof Graphics2D) {
 			((Graphics2D) gScaled).scale(zoomFactor, zoomFactor);
 		}

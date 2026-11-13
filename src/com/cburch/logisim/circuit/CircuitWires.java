@@ -418,7 +418,7 @@ class CircuitWires {
 					g.setColor(Value.WIDTH_ERROR_COLOR);
 				} else if (showState) {
 					if (!isValid) g.setColor(Value.NIL_COLOR);
-					else         g.setColor(state.getValue(s).getColor());
+					else         g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(s)));
 				} else {
 					g.setColor(DarkTheme.getCircuitForeground(context.isPrintView()));
 				}
@@ -439,7 +439,7 @@ class CircuitWires {
 							g.setColor(Value.WIDTH_ERROR_COLOR);
 						} else if (showState) {
 							if (!isValid) g.setColor(Value.NIL_COLOR);
-							else         g.setColor(state.getValue(loc).getColor());
+							else         g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(loc)));
 						} else {
 							g.setColor(DarkTheme.getCircuitForeground(context.isPrintView()));
 						}
@@ -461,7 +461,7 @@ class CircuitWires {
 						g.setColor(Value.WIDTH_ERROR_COLOR);
 					} else if (showState) {
 						if (!isValid) g.setColor(Value.NIL_COLOR);
-						else         g.setColor(state.getValue(s).getColor());
+						else         g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(s)));
 					} else {
 						g.setColor(DarkTheme.getCircuitForeground(context.isPrintView()));
 					}
@@ -491,7 +491,7 @@ class CircuitWires {
 								g.setColor(Value.WIDTH_ERROR_COLOR);
 							} else if (showState) {
 								if (!isValid) g.setColor(Value.NIL_COLOR);
-								else         g.setColor(state.getValue(loc).getColor());
+								else         g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(loc)));
 							} else {
 								g.setColor(DarkTheme.getCircuitForeground(context.isPrintView()));
 							}

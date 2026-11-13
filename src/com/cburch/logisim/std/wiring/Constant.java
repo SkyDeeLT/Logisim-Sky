@@ -264,7 +264,7 @@ public class Constant extends InstanceFactory {
 
 		Graphics g = painter.getGraphics();
 		if (painter.shouldDrawColor()) {
-			g.setColor(BACKGROUND_COLOR);
+			g.setColor(DarkTheme.isLightTheme() ? BACKGROUND_COLOR : DarkTheme.PANEL_BACKGROUND_ALT);
 			g.fillRect(x + bds.getX(), y + bds.getY(), bds.getWidth(), bds.getHeight());
 		}
 		if (v.getWidth() == 1) {

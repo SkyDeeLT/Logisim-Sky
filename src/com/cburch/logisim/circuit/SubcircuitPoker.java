@@ -3,10 +3,10 @@
 
 package com.cburch.logisim.circuit;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.gui.main.Canvas;
 import com.cburch.logisim.instance.InstancePainter;
@@ -14,9 +14,6 @@ import com.cburch.logisim.instance.InstancePoker;
 import com.cburch.logisim.instance.InstanceState;
 
 public class SubcircuitPoker extends InstancePoker {
-	
-	private static final Color MAGNIFYING_INTERIOR = new Color(200, 200, 255, 64);
-	private static final Color MAGNIFYING_INTERIOR_DOWN = new Color(128, 128, 255, 192);
 	
 	private boolean mouseDown;
 
@@ -41,13 +38,9 @@ public class SubcircuitPoker extends InstancePoker {
 			int[] xp = { tx - 1, cx + 8, cx + 10, tx + 1 };
 			int[] yp = { ty + 1, cy + 10, cy + 8, ty - 1 };
 			Graphics g = painter.getGraphics();
-			if (mouseDown) {
-				g.setColor(MAGNIFYING_INTERIOR_DOWN);
-			} else {
-				g.setColor(MAGNIFYING_INTERIOR);
-			}
+			g.setColor(mouseDown ? DarkTheme.PRESSED : DarkTheme.SELECTION);
 			g.fillOval(cx - 5, cy - 5, 10, 10);
-			g.setColor(Color.BLACK);
+			g.setColor(DarkTheme.getCircuitForeground(painter.isPrintView()));
 			g.drawOval(cx - 5, cy - 5, 10, 10);
 			g.fillPolygon(xp, yp, xp.length);
 		}

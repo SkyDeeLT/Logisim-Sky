@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.Icon;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.LogisimVersion;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.ReplacementMap;
@@ -62,8 +63,6 @@ public class SelectTool extends Tool {
 
 	private static final Color COLOR_UNMATCHED = new Color(192, 0, 0);
 	private static final Color COLOR_COMPUTING = new Color(96, 192, 96);
-	private static final Color COLOR_RECT_SELECT = new Color(0, 64, 128, 255);
-	private static final Color BACKGROUND_RECT_SELECT = new Color(192, 192, 255, 192);
 	
 	private static class MoveRequestHandler implements MoveRequestListener {
 		private Canvas canvas;
@@ -180,7 +179,8 @@ public class SelectTool extends Tool {
 			int w = right - left - 1;
 			int h = bot - top - 1;
 			if (w > 2 && h > 2) {
-				gBase.setColor(BACKGROUND_RECT_SELECT);
+				Color fill = DarkTheme.SELECTION;
+				gBase.setColor(new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), 150));
 				gBase.fillRect(left + 1, top + 1, w - 1, h - 1);
 			}
 			
@@ -190,12 +190,12 @@ public class SelectTool extends Tool {
 				Location cloc = c.getLocation();
 				Graphics gDup = gBase.create();
 				context.setGraphics(gDup);
-				c.getFactory().drawGhost(context, COLOR_RECT_SELECT,
+				c.getFactory().drawGhost(context, DarkTheme.ACCENT,
 						cloc.getX(), cloc.getY(), c.getAttributeSet());
 				gDup.dispose();
 			}
 
-			gBase.setColor(COLOR_RECT_SELECT);
+			gBase.setColor(DarkTheme.ACCENT);
 			GraphicsUtil.switchToWidth(gBase, 2);
 			if (w < 0) w = 0;
 			if (h < 0) h = 0;

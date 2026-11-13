@@ -75,7 +75,7 @@ public final class CommandPalette extends JDialog {
             @Override public Component getListCellRendererComponent(JList<?> l, Object value, int index, boolean selected, boolean focus) {
                 JLabel c = (JLabel) super.getListCellRendererComponent(l, value, index, selected, focus);
                 Item item = (Item) value;
-                c.setText("<html><b>" + escape(item.tool.getDisplayName()) + "</b> <span style='color:#8a96a8'>" + escape(item.path) + "</span></html>");
+                c.setText("<html><b>" + escape(item.tool.getDisplayName()) + "</b> <small>" + escape(item.path) + "</small></html>");
                 c.setBorder(BorderFactory.createEmptyBorder(0, DarkTheme.scale(8), 0, DarkTheme.scale(8)));
                 return c;
             }

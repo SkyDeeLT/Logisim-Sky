@@ -66,7 +66,6 @@ import com.cburch.logisim.util.ModernIcons;
 public class ProjectExplorer extends JTree implements LocaleListener {
 	private static final String DIRTY_MARKER = "*";
 	
-	static final Color MAGNIFYING_INTERIOR = new Color(200, 200, 255, 64);
 	
 	public static class Event {
 		private TreePath path;
@@ -254,9 +253,10 @@ public class ProjectExplorer extends JTree implements LocaleListener {
 				int r = Math.max(4, DarkTheme.scale(4));
 				int cx = x + size - r;
 				int cy = y + size - r;
-				g2.setColor(new Color(101, 177, 255, 80));
+				Color accent = DarkTheme.ACCENT;
+				g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 80));
 				g2.fillOval(cx - r, cy - r, 2 * r, 2 * r);
-				g2.setColor(DarkTheme.ACCENT);
+				g2.setColor(accent);
 				g2.drawOval(cx - r, cy - r, 2 * r, 2 * r);
 			}
 			g2.dispose();

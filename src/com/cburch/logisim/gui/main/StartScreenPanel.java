@@ -115,7 +115,7 @@ public final class StartScreenPanel extends JPanel {
                 b.setHorizontalAlignment(JButton.LEFT);
                 b.setBorder(BorderFactory.createEmptyBorder(DarkTheme.scale(8), DarkTheme.scale(10), DarkTheme.scale(8), DarkTheme.scale(10)));
                 String date = f.exists() ? new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(f.lastModified())) : "файл недоступен";
-                b.setText("<html><b>" + escape(f.getName()) + "</b><br><span style='color:#8a96a8'>" + escape(date) + "</span></html>");
+                b.setText("<html><b>" + escape(f.getName()) + "</b><br><small>" + escape(date) + "</small></html>");
                 b.setToolTipText(f.getAbsolutePath());
                 b.setMaximumSize(new Dimension(Integer.MAX_VALUE, DarkTheme.scale(54)));
                 b.addActionListener(new ActionListener() {
@@ -150,7 +150,7 @@ public final class StartScreenPanel extends JPanel {
     }
 
     private JButton bigButton(String title, String subtitle) {
-        JButton b = new JButton("<html><b>" + title + "</b><br><span style='color:#8a96a8'>" + subtitle + "</span></html>");
+        JButton b = new JButton("<html><b>" + title + "</b><br><small>" + subtitle + "</small></html>");
         b.setHorizontalAlignment(JButton.LEFT);
         b.setBorder(BorderFactory.createEmptyBorder(DarkTheme.scale(14), DarkTheme.scale(16), DarkTheme.scale(14), DarkTheme.scale(16)));
         b.setPreferredSize(new Dimension(DarkTheme.scale(260), DarkTheme.scale(70)));

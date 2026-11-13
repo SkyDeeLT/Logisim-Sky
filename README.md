@@ -28,7 +28,7 @@ Logisim Sky keeps the classic Logisim 2.7.1 circuit format and simulation core w
 - reusable circuit templates, including digital logic lab examples and user-saved fragments;
 - start screen with recent projects and bundled examples;
 - collapsible side panels and focus mode;
-- Midnight, Light, Aurora, Ocean and Ember themes;
+- Dark (neutral graphite), Light, Aurora, Ocean and Ember themes;
 - HiDPI UI, zoom and middle-button canvas panning.
 
 ## Compatibility

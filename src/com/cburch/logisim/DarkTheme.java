@@ -14,6 +14,8 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -37,6 +39,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
+import com.cburch.logisim.data.Value;
 import com.cburch.logisim.prefs.AppPreferences;
 
 public final class DarkTheme {
@@ -405,34 +408,34 @@ public final class DarkTheme {
         }
 
         currentTheme = THEME_DARK;
-        WINDOW_BACKGROUND = new Color(23, 27, 33);
-        PANEL_BACKGROUND = new Color(28, 33, 40);
-        PANEL_BACKGROUND_ALT = new Color(36, 42, 51);
-        CANVAS_BACKGROUND = new Color(23, 28, 34);
-        CANVAS_GRADIENT_START = new Color(17, 23, 32);
-        CANVAS_GRADIENT_MID = new Color(20, 29, 39);
-        CANVAS_GRADIENT_END = new Color(23, 35, 47);
-        SURFACE_GRADIENT_START = new Color(34, 40, 49);
-        SURFACE_GRADIENT_MID = new Color(30, 36, 45);
-        SURFACE_GRADIENT_END = new Color(27, 32, 40);
-        GRID = new Color(47, 56, 68);
-        GRID_STRONG = new Color(61, 73, 88);
-        FOREGROUND = new Color(232, 236, 242);
-        FOREGROUND_MUTED = new Color(158, 170, 185);
-        BORDER = new Color(62, 74, 89);
-        ACCENT = new Color(101, 177, 255);
-        ACCENT_HOVER = new Color(83, 140, 198);
-        SELECTION = new Color(43, 67, 94);
-        HOVER = new Color(45, 54, 66);
-        PRESSED = new Color(54, 66, 81);
-        HALO = new Color(85, 163, 241);
-        CANVAS_TEXT = new Color(235, 240, 247);
-        TOOLBAR_TOP = new Color(38, 45, 55);
-        TOOLBAR_BOTTOM = new Color(29, 35, 43);
-        MENUBAR_TOP = new Color(34, 40, 49);
-        MENUBAR_BOTTOM = new Color(27, 32, 39);
-        BORDER_SOFT = new Color(48, 58, 70);
-        INPUT_BACKGROUND = new Color(23, 27, 33);
+        WINDOW_BACKGROUND = gray(24);
+        PANEL_BACKGROUND = gray(30);
+        PANEL_BACKGROUND_ALT = gray(38);
+        CANVAS_BACKGROUND = gray(23);
+        CANVAS_GRADIENT_START = gray(19);
+        CANVAS_GRADIENT_MID = gray(23);
+        CANVAS_GRADIENT_END = gray(29);
+        SURFACE_GRADIENT_START = gray(36);
+        SURFACE_GRADIENT_MID = gray(31);
+        SURFACE_GRADIENT_END = gray(27);
+        GRID = gray(54);
+        GRID_STRONG = gray(72);
+        FOREGROUND = gray(233);
+        FOREGROUND_MUTED = gray(173);
+        BORDER = gray(71);
+        ACCENT = gray(211);
+        ACCENT_HOVER = gray(240);
+        SELECTION = gray(68);
+        HOVER = gray(44);
+        PRESSED = gray(58);
+        HALO = gray(211);
+        CANVAS_TEXT = gray(241);
+        TOOLBAR_TOP = gray(37);
+        TOOLBAR_BOTTOM = gray(29);
+        MENUBAR_TOP = gray(32);
+        MENUBAR_BOTTOM = gray(26);
+        BORDER_SOFT = gray(52);
+        INPUT_BACKGROUND = gray(24);
     }
 
     public static boolean isGradientCanvas() { return gradientCanvas; }
@@ -444,6 +447,11 @@ public final class DarkTheme {
     /** Screen diagrams follow the theme; print/export diagrams stay document-black. */
     public static Color getCircuitForeground(boolean printView) {
         return printView ? Color.BLACK : CANVAS_TEXT;
+    }
+
+    public static Color getCircuitSignalColor(Value value) {
+        Color color = value.getColor();
+        return !lightTheme && color == Value.MULTI_COLOR ? FOREGROUND_MUTED : color;
     }
 
     /**
@@ -613,11 +621,33 @@ public final class DarkTheme {
             Class<?> type = Class.forName(className);
             Object instance = type.newInstance();
             if (!(instance instanceof LookAndFeel)) return false;
+            if (THEME_DARK.equals(currentTheme)) {
+                type.getMethod("setExtraDefaults", Map.class).invoke(instance, darkFlatLafDefaults());
+            }
             UIManager.setLookAndFeel((LookAndFeel) instance);
             return true;
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    private static Map<String, String> darkFlatLafDefaults() {
+        // FlatLaf derives control colors before Swing's UIManager overrides are applied.
+        Map<String, String> defaults = new LinkedHashMap<String, String>();
+        defaults.put("@background", colorHex(PANEL_BACKGROUND));
+        defaults.put("@foreground", colorHex(FOREGROUND));
+        defaults.put("@accentColor", colorHex(ACCENT));
+        defaults.put("@selectionBackground", colorHex(SELECTION));
+        defaults.put("@selectionForeground", colorHex(FOREGROUND));
+        defaults.put("@selectionInactiveBackground", colorHex(PRESSED));
+        defaults.put("@accentButtonDefaultBackground", colorHex(ACCENT));
+        defaults.put("activeCaption", colorHex(PANEL_BACKGROUND_ALT));
+        defaults.put("inactiveCaption", colorHex(PANEL_BACKGROUND));
+        defaults.put("Desktop.background", colorHex(PANEL_BACKGROUND));
+        defaults.put("Actions.Grey", colorHex(FOREGROUND_MUTED));
+        defaults.put("Actions.GreyInline", colorHex(FOREGROUND_MUTED));
+        defaults.put("Objects.Grey", colorHex(FOREGROUND_MUTED));
+        return defaults;
     }
 
     /** Installs spacing, radii and state colors shared by all application windows. */
@@ -641,7 +671,8 @@ public final class DarkTheme {
         put("Button.pressedBackground", ui(PRESSED));
         put("Button.selectedBackground", ui(SELECTION));
         put("Button.default.background", ui(ACCENT));
-        put("Button.default.foreground", ui(lightTheme ? Color.WHITE : new Color(12, 20, 30)));
+        put("Button.default.foreground", ui(lightTheme ? Color.WHITE
+                : THEME_DARK.equals(currentTheme) ? INPUT_BACKGROUND : new Color(12, 20, 30)));
         put("Button.default.focusedBorderColor", ui(ACCENT_HOVER));
         put("Button.paintShadow", Boolean.FALSE);
         put("ToggleButton.arc", Integer.valueOf(arc));
@@ -759,6 +790,10 @@ public final class DarkTheme {
 
     private static ColorUIResource ui(Color c) { return new ColorUIResource(c); }
     private static void put(String key, Object value) { UIManager.put(key, value); }
+    private static Color gray(int level) { return new Color(level, level, level); }
+    private static String colorHex(Color color) {
+        return "#" + Integer.toHexString(color.getRGB()).substring(2);
+    }
 
     private static Color darken(Color c, float amount) {
         amount = Math.max(0f, Math.min(1f, amount));

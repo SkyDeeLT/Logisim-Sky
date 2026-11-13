@@ -21,6 +21,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.analyze.model.Entry;
 import com.cburch.logisim.analyze.model.TruthTable;
 import com.cburch.logisim.analyze.model.TruthTableEvent;
@@ -28,8 +29,6 @@ import com.cburch.logisim.analyze.model.TruthTableListener;
 import com.cburch.logisim.util.GraphicsUtil;
 
 class TableTabCaret {
-	private static Color SELECT_COLOR = new Color(192, 192, 255);
-
 	private Listener listener = new Listener();
 	private TableTab table;
 	private int cursorRow;
@@ -142,7 +141,7 @@ class TableTabCaret {
 	void paintBackground(Graphics g) {
 		if (cursorRow >= 0 && cursorCol >= 0
 				&& (cursorRow != markRow || cursorCol != markCol)) {
-			g.setColor(SELECT_COLOR);
+			g.setColor(DarkTheme.SELECTION);
 			
 			int r0 = cursorRow;
 			int c0 = cursorCol;

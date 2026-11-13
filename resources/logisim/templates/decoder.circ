@@ -27,174 +27,175 @@
   </toolbar>
   <circuit name="main">
     <a name="circuit" val="main" />
-    <comp name="Decoder" loc="(280,290)" lib="2">
+    <comp name="Decoder" loc="(280,390)" lib="2">
       <a name="select" val="4" />
       <a name="enable" val="false" />
     </comp>
-    <comp name="Pin" loc="(100,290)" lib="0">
+    <comp name="Pin" loc="(110,390)" lib="0">
       <a name="label" val="A" />
       <a name="width" val="4" />
       <a name="tristate" val="false" />
     </comp>
-    <wire from="(100,290)" to="(280,290)" />
-    <comp name="Pin" loc="(510,50)" lib="0">
+    <wire from="(110,390)" to="(280,390)" />
+    <comp name="Pin" loc="(560,80)" lib="0">
       <a name="label" val="Out0" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,130)" to="(320,130)" />
-    <wire from="(320,130)" to="(320,50)" />
-    <wire from="(320,50)" to="(510,50)" />
-    <comp name="Pin" loc="(510,70)" lib="0">
+    <wire from="(300,230)" to="(330,230)" />
+    <wire from="(330,230)" to="(330,80)" />
+    <wire from="(330,80)" to="(560,80)" />
+    <comp name="Pin" loc="(560,110)" lib="0">
       <a name="label" val="Out1" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,140)" to="(330,140)" />
-    <wire from="(330,140)" to="(330,70)" />
-    <wire from="(330,70)" to="(510,70)" />
-    <comp name="Pin" loc="(510,90)" lib="0">
+    <wire from="(300,240)" to="(340,240)" />
+    <wire from="(340,240)" to="(340,110)" />
+    <wire from="(340,110)" to="(560,110)" />
+    <comp name="Pin" loc="(560,140)" lib="0">
       <a name="label" val="Out2" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,150)" to="(340,150)" />
-    <wire from="(340,150)" to="(340,90)" />
-    <wire from="(340,90)" to="(510,90)" />
-    <comp name="Pin" loc="(510,110)" lib="0">
+    <wire from="(300,250)" to="(350,250)" />
+    <wire from="(350,250)" to="(350,140)" />
+    <wire from="(350,140)" to="(560,140)" />
+    <comp name="Pin" loc="(560,170)" lib="0">
       <a name="label" val="Out3" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,160)" to="(350,160)" />
-    <wire from="(350,160)" to="(350,110)" />
-    <wire from="(350,110)" to="(510,110)" />
-    <comp name="Pin" loc="(510,130)" lib="0">
+    <wire from="(300,260)" to="(360,260)" />
+    <wire from="(360,260)" to="(360,170)" />
+    <wire from="(360,170)" to="(560,170)" />
+    <comp name="Pin" loc="(560,200)" lib="0">
       <a name="label" val="Out4" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,170)" to="(360,170)" />
-    <wire from="(360,170)" to="(360,130)" />
-    <wire from="(360,130)" to="(510,130)" />
-    <comp name="Pin" loc="(510,150)" lib="0">
+    <wire from="(300,270)" to="(370,270)" />
+    <wire from="(370,270)" to="(370,200)" />
+    <wire from="(370,200)" to="(560,200)" />
+    <comp name="Pin" loc="(560,230)" lib="0">
       <a name="label" val="Out5" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,180)" to="(370,180)" />
-    <wire from="(370,180)" to="(370,150)" />
-    <wire from="(370,150)" to="(510,150)" />
-    <comp name="Pin" loc="(510,170)" lib="0">
+    <wire from="(300,280)" to="(380,280)" />
+    <wire from="(380,280)" to="(380,230)" />
+    <wire from="(380,230)" to="(560,230)" />
+    <comp name="Pin" loc="(560,260)" lib="0">
       <a name="label" val="Out6" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,190)" to="(380,190)" />
-    <wire from="(380,190)" to="(380,170)" />
-    <wire from="(380,170)" to="(510,170)" />
-    <comp name="Pin" loc="(510,190)" lib="0">
+    <wire from="(300,290)" to="(390,290)" />
+    <wire from="(390,290)" to="(390,260)" />
+    <wire from="(390,260)" to="(560,260)" />
+    <comp name="Pin" loc="(560,290)" lib="0">
       <a name="label" val="Out7" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,200)" to="(390,200)" />
-    <wire from="(390,200)" to="(390,190)" />
-    <wire from="(390,190)" to="(510,190)" />
-    <comp name="Pin" loc="(510,210)" lib="0">
+    <wire from="(300,300)" to="(400,300)" />
+    <wire from="(400,300)" to="(400,290)" />
+    <wire from="(400,290)" to="(560,290)" />
+    <comp name="Pin" loc="(560,320)" lib="0">
       <a name="label" val="Out8" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,210)" to="(390,210)" />
-    <wire from="(390,210)" to="(510,210)" />
-    <comp name="Pin" loc="(510,230)" lib="0">
+    <wire from="(300,310)" to="(400,310)" />
+    <wire from="(400,310)" to="(400,320)" />
+    <wire from="(400,320)" to="(560,320)" />
+    <comp name="Pin" loc="(560,350)" lib="0">
       <a name="label" val="Out9" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,220)" to="(380,220)" />
-    <wire from="(380,220)" to="(380,230)" />
-    <wire from="(380,230)" to="(510,230)" />
-    <comp name="Pin" loc="(510,250)" lib="0">
+    <wire from="(300,320)" to="(390,320)" />
+    <wire from="(390,320)" to="(390,350)" />
+    <wire from="(390,350)" to="(560,350)" />
+    <comp name="Pin" loc="(560,380)" lib="0">
       <a name="label" val="Out10" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,230)" to="(370,230)" />
-    <wire from="(370,230)" to="(370,250)" />
-    <wire from="(370,250)" to="(510,250)" />
-    <comp name="Pin" loc="(510,270)" lib="0">
+    <wire from="(300,330)" to="(380,330)" />
+    <wire from="(380,330)" to="(380,380)" />
+    <wire from="(380,380)" to="(560,380)" />
+    <comp name="Pin" loc="(560,410)" lib="0">
       <a name="label" val="Out11" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,240)" to="(360,240)" />
-    <wire from="(360,240)" to="(360,270)" />
-    <wire from="(360,270)" to="(510,270)" />
-    <comp name="Pin" loc="(510,290)" lib="0">
+    <wire from="(300,340)" to="(370,340)" />
+    <wire from="(370,340)" to="(370,410)" />
+    <wire from="(370,410)" to="(560,410)" />
+    <comp name="Pin" loc="(560,440)" lib="0">
       <a name="label" val="Out12" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,250)" to="(350,250)" />
-    <wire from="(350,250)" to="(350,290)" />
-    <wire from="(350,290)" to="(510,290)" />
-    <comp name="Pin" loc="(510,310)" lib="0">
+    <wire from="(300,350)" to="(360,350)" />
+    <wire from="(360,350)" to="(360,440)" />
+    <wire from="(360,440)" to="(560,440)" />
+    <comp name="Pin" loc="(560,470)" lib="0">
       <a name="label" val="Out13" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,260)" to="(340,260)" />
-    <wire from="(340,260)" to="(340,310)" />
-    <wire from="(340,310)" to="(510,310)" />
-    <comp name="Pin" loc="(510,330)" lib="0">
+    <wire from="(300,360)" to="(350,360)" />
+    <wire from="(350,360)" to="(350,470)" />
+    <wire from="(350,470)" to="(560,470)" />
+    <comp name="Pin" loc="(560,500)" lib="0">
       <a name="label" val="Out14" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,270)" to="(330,270)" />
-    <wire from="(330,270)" to="(330,330)" />
-    <wire from="(330,330)" to="(510,330)" />
-    <comp name="Pin" loc="(510,350)" lib="0">
+    <wire from="(300,370)" to="(340,370)" />
+    <wire from="(340,370)" to="(340,500)" />
+    <wire from="(340,500)" to="(560,500)" />
+    <comp name="Pin" loc="(560,530)" lib="0">
       <a name="label" val="Out15" />
       <a name="width" val="1" />
       <a name="facing" val="west" />
       <a name="output" val="true" />
       <a name="labelloc" val="east" />
     </comp>
-    <wire from="(300,280)" to="(320,280)" />
-    <wire from="(320,280)" to="(320,350)" />
-    <wire from="(320,350)" to="(510,350)" />
+    <wire from="(300,380)" to="(330,380)" />
+    <wire from="(330,380)" to="(330,530)" />
+    <wire from="(330,530)" to="(560,530)" />
   </circuit>
 </project>

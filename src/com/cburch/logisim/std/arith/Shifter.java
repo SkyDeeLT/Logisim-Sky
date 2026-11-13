@@ -3,10 +3,10 @@
 
 package com.cburch.logisim.std.arith;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.util.Arrays;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.Attributes;
@@ -160,7 +160,7 @@ public class Shifter extends InstanceFactory {
 		int x = loc.getX() - 15;
 		int y = loc.getY();
 		Object shift = painter.getAttributeValue(ATTR_SHIFT);
-		g.setColor(Color.BLACK);
+		g.setColor(DarkTheme.getCircuitForeground(painter.isPrintView()));
 		if (shift == SHIFT_LOGICAL_RIGHT) {
 			g.fillRect(x, y - 1, 8, 3);
 			drawArrow(g, x + 10, y, -4);

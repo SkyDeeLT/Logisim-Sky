@@ -6,6 +6,7 @@ package com.cburch.logisim.std.arith;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
@@ -84,7 +85,7 @@ public class Divider extends InstanceFactory {
 		int x = loc.getX();
 		int y = loc.getY();
 		GraphicsUtil.switchToWidth(g, 2);
-		g.setColor(Color.BLACK);
+		g.setColor(DarkTheme.getCircuitForeground(painter.isPrintView()));
 		g.fillOval(x - 12, y - 7, 4, 4);
 		g.drawLine(x - 15, y, x - 5, y);
 		g.fillOval(x - 12, y + 3, 4, 4);

@@ -3,6 +3,7 @@
 
 package com.cburch.logisim.circuit.appear;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
@@ -16,12 +17,15 @@ import com.cburch.draw.model.CanvasModelEvent;
 import com.cburch.draw.model.CanvasModelListener;
 import com.cburch.draw.model.CanvasObject;
 import com.cburch.draw.model.Drawing;
+import com.cburch.draw.shapes.DrawAttr;
+import com.cburch.draw.shapes.Rectangle;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.util.EventSourceWeakSupport;
+import com.cburch.logisim.util.GraphicsUtil;
 
 public class CircuitAppearance extends Drawing {
 	private class MyListener implements CanvasModelListener {
@@ -162,6 +166,10 @@ public class CircuitAppearance extends Drawing {
 	}
 
 	public void paintSubcircuit(Graphics g, Direction facing) {
+		paintSubcircuit(g, facing, null);
+	}
+
+	public void paintSubcircuit(Graphics g, Direction facing, Color outline) {
 		Direction defaultFacing = getFacing();
 		double rotate = 0.0;
 		if (facing != defaultFacing && g instanceof Graphics2D) {
@@ -173,7 +181,14 @@ public class CircuitAppearance extends Drawing {
 		for (CanvasObject shape : getObjectsFromBottom()) {
 			if (!(shape instanceof AppearanceElement)) {
 				Graphics dup = g.create();
-				shape.paint(dup, null);
+				if (outline != null && isDefault && shape instanceof Rectangle) {
+					Rectangle body = (Rectangle) shape;
+					dup.setColor(outline);
+					GraphicsUtil.switchToWidth(dup, body.getValue(DrawAttr.STROKE_WIDTH));
+					dup.drawRect(body.getX(), body.getY(), body.getWidth(), body.getHeight());
+				} else {
+					shape.paint(dup, null);
+				}
 				dup.dispose();
 			}
 		}

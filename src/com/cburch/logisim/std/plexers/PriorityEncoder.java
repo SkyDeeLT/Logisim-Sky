@@ -6,6 +6,7 @@ package com.cburch.logisim.std.plexers;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.BitWidth;
@@ -174,7 +175,7 @@ public class PriorityEncoder extends InstanceFactory {
 			halign = GraphicsUtil.H_LEFT;
 		}
 		GraphicsUtil.drawText(g, "0", x0, y0, halign, GraphicsUtil.V_BASELINE);
-		g.setColor(Color.BLACK);
+		g.setColor(DarkTheme.getCircuitForeground(painter.isPrintView()));
 		GraphicsUtil.drawCenteredText(g, "Pri",
 				bds.getX() + bds.getWidth() / 2,
 				bds.getY() + bds.getHeight() / 2);

@@ -6,6 +6,7 @@ package com.cburch.logisim.std.arith;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import com.cburch.logisim.DarkTheme;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
@@ -83,7 +84,7 @@ public class Subtractor extends InstanceFactory {
 		int x = loc.getX();
 		int y = loc.getY();
 		GraphicsUtil.switchToWidth(g, 2);
-		g.setColor(Color.BLACK);
+		g.setColor(DarkTheme.getCircuitForeground(painter.isPrintView()));
 		g.drawLine(x - 15, y, x - 5, y);
 		GraphicsUtil.switchToWidth(g, 1);
 	}

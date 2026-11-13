@@ -43,7 +43,7 @@ class SplitterPainter {
 		for (int i = 0, n = attrs.fanout; i < n; i++) {
 			if (showState) {
 				Value val = state.getValue(Location.create(x, y));
-				g.setColor(val.getColor());
+				g.setColor(DarkTheme.getCircuitSignalColor(val));
 			}
 			g.drawLine(x, y, x + dxEndSpine, y + dyEndSpine);
 			x += dx;
@@ -178,7 +178,7 @@ class SplitterPainter {
 			int yi = y1;
 			for (int i = 1; i <= fanout; i++) {
 				if (context.getShowState()) {
-					g.setColor(state.getValue(Location.create(xi, yi)).getColor());
+					g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(Location.create(xi, yi))));
 				}
 				int xSpine = xi + (xi == x0 ? 0 : (xi < x0 ? 10 : -10));
 				g.drawLine(xi, yi, xSpine, ySpine);
@@ -202,7 +202,7 @@ class SplitterPainter {
 			int yi = y1;
 			for (int i = 1; i <= fanout; i++) {
 				if (context.getShowState()) {
-					g.setColor(state.getValue(Location.create(xi, yi)).getColor());
+					g.setColor(DarkTheme.getCircuitSignalColor(state.getValue(Location.create(xi, yi))));
 				}
 				int ySpine = yi + (yi == y0 ? 0 : (yi < y0 ? 10 : -10));
 				g.drawLine(xi, yi, xSpine, ySpine);

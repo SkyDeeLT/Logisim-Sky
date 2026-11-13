@@ -87,7 +87,6 @@ public class Canvas extends JPanel
 		| InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
 	private static final Color DEFAULT_ERROR_COLOR = new Color(192, 0, 0);
 
-	private static final Color TICK_RATE_COLOR = new Color(0, 0, 92, 92);
 	private static final Font TICK_RATE_FONT = new Font("serif", Font.BOLD, 12);
 	
 	private class MyListener
@@ -543,7 +542,7 @@ public class Canvas extends JPanel
 			if (AppPreferences.SHOW_TICK_RATE.getBoolean()) {
 				String hz = tickCounter.getTickRate();
 				if (hz != null && !hz.equals("")) {
-					g.setColor(TICK_RATE_COLOR);
+					g.setColor(DarkTheme.FOREGROUND_MUTED);
 					g.setFont(TICK_RATE_FONT);
 					FontMetrics fm = g.getFontMetrics();
 					int x = getWidth() - fm.stringWidth(hz) - 5;
