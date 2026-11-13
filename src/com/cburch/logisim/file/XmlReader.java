@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -17,6 +20,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import com.cburch.draw.model.AbstractCanvasObject;
 import com.cburch.logisim.LogisimVersion;
@@ -32,6 +36,7 @@ import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.std.wiring.Pin;
 import com.cburch.logisim.tools.Library;
 import com.cburch.logisim.tools.Tool;
+import com.cburch.logisim.util.Dag;
 import com.cburch.logisim.util.InputEventUtil;
 import com.cburch.logisim.util.StringUtil;
 
@@ -105,6 +110,18 @@ class XmlReader {
 				String name = sub_elt.getTagName();
 				if (name.equals("circuit") || name.equals("lib")) {
 					; // Nothing to do: Done earlier.
+				} else if (name.equals("main")) {
+					String main = sub_elt.getAttribute("name");
+					Circuit circ = file.getCircuit(main);
+					if (circ != null) {
+						file.setMainCircuit(circ);
+					}
+				} else if (name.equals("message")) {
+					String message = sub_elt.getAttribute("value");
+					if (template) loader.showError(message);
+					else file.addMessage(message);
+				} else if (template) {
+					// Templates import circuit data, without editing project settings.
 				} else if (name.equals("options")) {
 					try {
 						initAttributeSet(sub_elt, file.getOptions().getAttributeSet(), null);
@@ -115,14 +132,6 @@ class XmlReader {
 					initMouseMappings(sub_elt);
 				} else if (name.equals("toolbar")) {
 					initToolbarData(sub_elt);
-				} else if (name.equals("main")) {
-					String main = sub_elt.getAttribute("name");
-					Circuit circ = file.getCircuit(main);
-					if (circ != null) {
-						file.setMainCircuit(circ);
-					}
-				} else if (name.equals("message")) {
-					file.addMessage(sub_elt.getAttribute("value"));
 				}
 			}
 			
@@ -146,6 +155,7 @@ class XmlReader {
 			Library ret = loader.loadLibrary(desc);
 			if (ret == null) return null;
 			libs.put(name, ret);
+			if (template) return ret;
 			for (Element sub_elt : XmlIterator.forChildElements(elt, "tool")) {
 				if (!sub_elt.hasAttribute("name")) {
 					loader.showError(Strings.get("toolNameMissingError"));
@@ -360,15 +370,25 @@ class XmlReader {
 	}
 
 	private LibraryLoader loader;
+	private final boolean template;
 
 	XmlReader(Loader loader) {
+		this(loader, false);
+	}
+
+	XmlReader(Loader loader, boolean template) {
 		this.loader = loader;
+		this.template = template;
 	}
 
 	LogisimFile readLibrary(InputStream is) throws IOException, SAXException {
 		Document doc = loadXmlFrom(is);
 		Element elt = doc.getDocumentElement();
+		if (template && !"project".equals(elt.getTagName())) {
+			throw new IOException(Strings.get("circuitTemplatesProject"));
+		}
 		considerRepairs(doc, elt);
+		if (template) validateTemplateCircuits(elt);
 		LogisimFile file = new LogisimFile((Loader) loader);
 		ReadContext context = new ReadContext(file);
 		context.toLogisimFile(elt);
@@ -389,11 +409,56 @@ class XmlReader {
 	private Document loadXmlFrom(InputStream is) throws SAXException, IOException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(true);
-		DocumentBuilder builder = null;
 		try {
-			builder = factory.newDocumentBuilder();
-		} catch (ParserConfigurationException ex) { }
-		return builder.parse(is);
+			if (template) {
+				factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+				factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+				factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+			}
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			if (template) builder.setErrorHandler(new DefaultHandler());
+			return builder.parse(is);
+		} catch (ParserConfigurationException ex) {
+			throw new IOException(ex);
+		}
+	}
+
+	private void validateTemplateCircuits(Element project) throws IOException {
+		Set<String> names = new HashSet<String>();
+		Set<String> libraries = new HashSet<String>();
+		for (Element lib : XmlIterator.forChildElements(project, "lib")) {
+			String name = lib.getAttribute("name");
+			if (name.isEmpty() || !libraries.add(name)) {
+				throw new IOException(Strings.get("circuitTemplatesProject"));
+			}
+		}
+		for (Element circuit : XmlIterator.forChildElements(project, "circuit")) {
+			String name = circuit.getAttribute("name");
+			if (name.isEmpty() || !names.add(name)) {
+				throw new IOException(Strings.get("circuitTemplatesProject"));
+			}
+		}
+		String main = null;
+		for (Element element : XmlIterator.forChildElements(project, "main")) {
+			if (main != null) throw new IOException(Strings.get("circuitTemplatesProject"));
+			main = element.getAttribute("name");
+		}
+		if (!names.contains(main)) throw new IOException(Strings.get("circuitTemplatesProject"));
+
+		Dag dependencies = new Dag();
+		for (Element circuit : XmlIterator.forChildElements(project, "circuit")) {
+			String parent = circuit.getAttribute("name");
+			for (Element component : XmlIterator.forChildElements(circuit, "comp")) {
+				if (!component.getAttribute("lib").isEmpty()) continue;
+				String child = component.getAttribute("name");
+				if (!names.contains(child)) {
+					throw new IOException(Strings.get("circuitTemplatesExternal", child));
+				}
+				if (child.equals(main) || !dependencies.addEdge(parent, child)) {
+					throw new IOException(Strings.get("circuitTemplatesCycle", child));
+				}
+			}
+		}
 	}
 	
 	private void considerRepairs(Document doc, Element root) {

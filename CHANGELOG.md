@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2
+
+- Added a Templates tab with editable examples for Boolean functions, CMOS gates, computer arithmetic, and multiplexers and ALUs.
+- Save a selection or the active circuit as a reusable template. Templates are shared across projects on the same computer.
+- Preview and place a template on the canvas with one click. Undo and redo include the inserted fragment and any subcircuits it requires.
+
 ## v1.0.1
 
 ### Fixed

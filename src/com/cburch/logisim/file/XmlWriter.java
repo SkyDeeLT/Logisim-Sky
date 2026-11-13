@@ -4,8 +4,10 @@
 package com.cburch.logisim.file;
 
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,9 +48,42 @@ class XmlWriter {
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
 		Document doc = docBuilder.newDocument();
-		XmlWriter context = new XmlWriter(file, doc, loader);
+		XmlWriter context = new XmlWriter(file, doc, loader, file.getLibraries());
 		context.fromLogisimFile();
-		
+
+		writeDocument(doc, out);
+	}
+
+	static void writeTemplate(LogisimFile file, OutputStream out, LibraryLoader loader, Circuit main,
+			Map<Circuit, Collection<Component>> circuits, Set<Library> libraries, boolean fullCircuit)
+			throws ParserConfigurationException, TransformerException {
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+		XmlWriter writer = new XmlWriter(file, doc, loader, libraries);
+		Element project = writer.createProjectElement();
+		for (Library library : libraries) {
+			project.appendChild(writer.fromLibrary(library, false));
+		}
+		project.appendChild(writer.fromMainCircuit(main));
+		for (Map.Entry<Circuit, Collection<Component>> entry : circuits.entrySet()) {
+			Circuit circuit = entry.getKey();
+			Element element;
+			if (circuit == main && !fullCircuit) {
+				element = writer.fromCircuitHeader(circuit, false);
+				for (Component component : entry.getValue()) {
+					element.appendChild(component instanceof Wire
+							? writer.fromWire((Wire) component)
+							: writer.fromComponent(component));
+				}
+			} else {
+				element = writer.fromCircuit(circuit);
+			}
+			project.appendChild(element);
+		}
+		writeDocument(doc, out);
+	}
+
+	private static void writeDocument(Document doc, OutputStream out)
+			throws TransformerException {
 		TransformerFactory tfFactory = TransformerFactory.newInstance();
 		try {
 			tfFactory.setAttribute("indent-number", Integer.valueOf(2));
@@ -66,34 +101,39 @@ class XmlWriter {
 		tf.transform(src, dest);
 	}
 
-	private LogisimFile file;
-	private Document doc;
-	private LibraryLoader loader;
-	private HashMap<Library,String> libs = new HashMap<Library,String>();
+	private final LogisimFile file;
+	private final Document doc;
+	private final LibraryLoader loader;
+	private final Iterable<Library> componentLibraries;
+	private final HashMap<Library,String> libs = new HashMap<Library,String>();
 
-	private XmlWriter(LogisimFile file, Document doc, LibraryLoader loader) {
+	private XmlWriter(LogisimFile file, Document doc, LibraryLoader loader,
+			Iterable<Library> componentLibraries) {
 		this.file = file;
 		this.doc = doc;
 		this.loader = loader;
+		this.componentLibraries = componentLibraries;
 	}
 
-	Element fromLogisimFile() {
+	private Element createProjectElement() {
 		Element ret = doc.createElement("project");
 		doc.appendChild(ret);
 		ret.appendChild(doc.createTextNode("\nThis file is intended to be "
 				+ "loaded by Logisim (http://www.cburch.com/logisim/).\n"));
 		ret.setAttribute("version", "1.0");
 		ret.setAttribute("source", Main.VERSION_NAME);
+		return ret;
+	}
 
+	Element fromLogisimFile() {
+		Element ret = createProjectElement();
 		for (Library lib : file.getLibraries()) {
-			Element elt = fromLibrary(lib);
+			Element elt = fromLibrary(lib, true);
 			if (elt != null) ret.appendChild(elt);
 		}
 
 		if (file.getMainCircuit() != null) {
-			Element mainElt = doc.createElement("main");
-			mainElt.setAttribute("name", file.getMainCircuit().getName());
-			ret.appendChild(mainElt);
+			ret.appendChild(fromMainCircuit(file.getMainCircuit()));
 		}
 
 		ret.appendChild(fromOptions());
@@ -106,7 +146,13 @@ class XmlWriter {
 		return ret;
 	}
 
-	Element fromLibrary(Library lib) {
+	private Element fromMainCircuit(Circuit circuit) {
+		Element element = doc.createElement("main");
+		element.setAttribute("name", circuit.getName());
+		return element;
+	}
+
+	Element fromLibrary(Library lib, boolean writeToolDefaults) {
 		Element ret = doc.createElement("lib");
 		if (libs.containsKey(lib)) return null;
 		String name = "" + libs.size();
@@ -119,6 +165,7 @@ class XmlWriter {
 		libs.put(lib, name);
 		ret.setAttribute("name", name);
 		ret.setAttribute("desc", desc);
+		if (!writeToolDefaults) return ret;
 		for (Tool t : lib.getTools()) {
 			AttributeSet attrs = t.getAttributeSet();
 			if (attrs != null) {
@@ -190,11 +237,11 @@ class XmlWriter {
 		return elt;
 	}
 
-	Element fromCircuit(Circuit circuit) {
+	private Element fromCircuitHeader(Circuit circuit, boolean writeAppearance) {
 		Element ret = doc.createElement("circuit");
 		ret.setAttribute("name", circuit.getName());
 		addAttributeSetContent(ret, circuit.getStaticAttributes(), null);
-		if (!circuit.getAppearance().isDefaultAppearance()) {
+		if (writeAppearance && !circuit.getAppearance().isDefaultAppearance()) {
 			Element appear = doc.createElement("appear");
 			for (Object o : circuit.getAppearance().getObjectsFromBottom()) {
 				if (o instanceof AbstractCanvasObject) {
@@ -206,6 +253,11 @@ class XmlWriter {
 			}
 			ret.appendChild(appear);
 		}
+		return ret;
+	}
+
+	Element fromCircuit(Circuit circuit) {
+		Element ret = fromCircuitHeader(circuit, true);
 		for (Wire w : circuit.getWires()) {
 			ret.appendChild(fromWire(w));
 		}
@@ -288,7 +340,7 @@ class XmlWriter {
 		if (file.contains(source)) {
 			return file;
 		}
-		for (Library lib : file.getLibraries()) {
+		for (Library lib : componentLibraries) {
 			if (lib.contains(source)) return lib;
 		}
 		return null;

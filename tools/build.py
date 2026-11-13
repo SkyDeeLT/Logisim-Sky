@@ -16,7 +16,7 @@ BUILD = ROOT / "build"
 CLASSES = BUILD / "classes"
 STAGE = BUILD / "stage"
 DIST = ROOT / "dist"
-OUT_JAR = DIST / "Logisim-Sky-1.0.1.jar"
+OUT_JAR = DIST / "Logisim-Sky-1.0.2.jar"
 MANIFEST = ROOT / "packaging" / "MANIFEST.MF"
 
 

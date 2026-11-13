@@ -109,7 +109,7 @@ public class CollapsibleSidePanel extends JPanel {
             button.setPreferredSize(new Dimension(getCollapsedWidth(), DarkTheme.scale(54)));
             button.setToolTipText(side == LEFT
                     ? "Скрыть/показать панель проекта • Ctrl+Alt+L"
-                    : "Скрыть/показать Live-анализ • Ctrl+Alt+R");
+                    : Strings.get("templatesInspectorRailTip"));
             button.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) { toggle(); }
             });

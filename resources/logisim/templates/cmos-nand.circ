@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='utf-8'?>
+<project source="2.7.1" version="1.0">
+  <lib name="0" desc="#Wiring" />
+  <lib name="1" desc="#Gates" />
+  <lib name="2" desc="#Plexers" />
+  <lib name="3" desc="#Arithmetic" />
+  <lib name="4" desc="#Memory" />
+  <lib name="5" desc="#I/O" />
+  <lib name="6" desc="#Base" />
+  <main name="main" />
+  <options>
+    <a name="gateUndefined" val="error" />
+    <a name="simlimit" val="1000" />
+    <a name="simrand" val="0" />
+  </options>
+  <mappings>
+    <tool lib="6" name="Menu Tool" map="Button3" />
+  </mappings>
+  <toolbar>
+    <tool lib="6" name="Poke Tool" />
+    <tool lib="6" name="Edit Tool" />
+    <tool lib="6" name="Text Tool" />
+    <tool lib="0" name="Pin" />
+    <tool lib="1" name="NOT Gate" />
+    <tool lib="1" name="AND Gate" />
+    <tool lib="1" name="OR Gate" />
+  </toolbar>
+  <circuit name="main">
+    <a name="circuit" val="main" />
+    <comp name="Pin" loc="(100,170)" lib="0">
+      <a name="label" val="A" />
+      <a name="width" val="1" />
+      <a name="tristate" val="false" />
+    </comp>
+    <wire from="(100,170)" to="(120,170)" />
+    <comp name="Tunnel" loc="(120,170)" lib="0">
+      <a name="label" val="A" />
+      <a name="facing" val="west" />
+      <a name="width" val="1" />
+    </comp>
+    <comp name="Pin" loc="(100,230)" lib="0">
+      <a name="label" val="B" />
+      <a name="width" val="1" />
+      <a name="tristate" val="false" />
+    </comp>
+    <wire from="(100,230)" to="(120,230)" />
+    <comp name="Tunnel" loc="(120,230)" lib="0">
+      <a name="label" val="B" />
+      <a name="facing" val="west" />
+      <a name="width" val="1" />
+    </comp>
+    <comp name="Power" loc="(310,80)" lib="0" />
+    <comp name="Ground" loc="(310,320)" lib="0" />
+    <comp name="Transistor" loc="(280,180)" lib="0">
+      <a name="type" val="p" />
+      <a name="facing" val="south" />
+      <a name="gate" val="tl" />
+    </comp>
+    <comp name="Transistor" loc="(340,180)" lib="0">
+      <a name="type" val="p" />
+      <a name="facing" val="south" />
+      <a name="gate" val="br" />
+    </comp>
+    <wire from="(280,140)" to="(280,120)" />
+    <wire from="(280,120)" to="(310,120)" />
+    <wire from="(310,120)" to="(340,120)" />
+    <wire from="(340,120)" to="(340,140)" />
+    <wire from="(310,80)" to="(310,120)" />
+    <comp name="Tunnel" loc="(240,160)" lib="0">
+      <a name="label" val="A" />
+      <a name="facing" val="east" />
+      <a name="width" val="1" />
+    </comp>
+    <wire from="(240,160)" to="(260,160)" />
+    <wire from="(360,160)" to="(380,160)" />
+    <comp name="Tunnel" loc="(380,160)" lib="0">
+      <a name="label" val="B" />
+      <a name="facing" val="west" />
+      <a name="width" val="1" />
+    </comp>
+    <wire from="(280,180)" to="(280,200)" />
+    <wire from="(280,200)" to="(310,200)" />
+    <wire from="(310,200)" to="(340,200)" />
+    <wire from="(340,200)" to="(340,180)" />
+    <comp name="Transistor" loc="(310,210)" lib="0">
+      <a name="type" val="n" />
+      <a name="facing" val="north" />
+      <a name="gate" val="tl" />
+    </comp>
+    <comp name="Transistor" loc="(310,260)" lib="0">
+      <a name="type" val="n" />
+      <a name="facing" val="north" />
+      <a name="gate" val="tl" />
+    </comp>
+    <wire from="(310,200)" to="(310,210)" />
+    <wire from="(310,250)" to="(310,260)" />
+    <wire from="(310,300)" to="(310,320)" />
+    <comp name="Tunnel" loc="(270,230)" lib="0">
+      <a name="label" val="A" />
+      <a name="facing" val="east" />
+      <a name="width" val="1" />
+    </comp>
+    <wire from="(270,230)" to="(290,230)" />
+    <comp name="Tunnel" loc="(270,280)" lib="0">
+      <a name="label" val="B" />
+      <a name="facing" val="east" />
+      <a name="width" val="1" />
+    </comp>
+    <wire from="(270,280)" to="(290,280)" />
+    <comp name="Pin" loc="(420,200)" lib="0">
+      <a name="label" val="Y" />
+      <a name="width" val="1" />
+      <a name="facing" val="west" />
+      <a name="output" val="true" />
+      <a name="labelloc" val="east" />
+    </comp>
+    <wire from="(340,200)" to="(420,200)" />
+  </circuit>
+</project>

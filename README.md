@@ -6,7 +6,7 @@
 
 <p align="center">
   A modern desktop-focused derivative of classic Logisim 2.7.1.<br>
-  Current desktop release: <strong>v1.0.1</strong>
+  Current desktop release: <strong>v1.0.2</strong>
 </p>
 
 ## About
@@ -25,6 +25,7 @@ Logisim Sky keeps the classic Logisim 2.7.1 circuit format and simulation core w
 - full wire-network highlighting with live values;
 - undo/redo history panel;
 - built-in combinational test cases;
+- reusable circuit templates, including digital logic lab examples and user-saved fragments;
 - start screen with recent projects and bundled examples;
 - collapsible side panels and focus mode;
 - Midnight, Light, Aurora, Ocean and Ember themes;
@@ -38,11 +39,11 @@ Logisim Sky keeps the classic Logisim `2.7.1` project serializer. UI state, anal
 
 Prebuilt packages are published on the GitHub **Releases** page, not committed into the source repository.
 
-Desktop v1.0.1 downloads:
+Desktop v1.0.2 downloads:
 
-- `Logisim-Sky-1.0.1-Apple-Silicon.zip` - macOS Apple Silicon;
-- `Logisim-Sky-1.0.1.jar` - cross-platform Java archive;
-- `Logisim-Sky-1.0.1-Windows-x64.exe` - Windows x64.
+- `Logisim-Sky-1.0.2-Apple-Silicon.zip` - macOS Apple Silicon;
+- `Logisim-Sky-1.0.2.jar` - cross-platform Java archive;
+- `Logisim-Sky-1.0.2-Windows-x64.exe` - Windows x64.
 
 ## Building from source
 
