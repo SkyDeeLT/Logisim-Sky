@@ -150,6 +150,15 @@ public class OptionsFrame extends LFrame {
 		}
 		super.setVisible(value);
 	}
+
+	@Override
+	public void dispose() {
+		windowManager.frameClosed(this);
+		LocaleManager.removeLocaleListener(myListener);
+		file.removeLibraryListener(myListener);
+		((LogisimMenuBar) getJMenuBar()).dispose();
+		super.dispose();
+	}
 	
 	OptionsPanel[] getPrefPanels() {
 		return panels;

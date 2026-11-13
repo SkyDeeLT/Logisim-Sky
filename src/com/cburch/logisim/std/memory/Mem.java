@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
 import com.cburch.hex.HexModel;
@@ -170,15 +171,20 @@ abstract class Mem extends InstanceFactory {
 	}
 	
 	static class MemListener implements HexModelListener {
-		Instance instance;
-		
-		MemListener(Instance instance) { this.instance = instance; }
+		private final WeakReference<Instance> instance;
+		private final boolean simulationChange;
+
+		MemListener(Instance instance, boolean simulationChange) {
+			this.instance = new WeakReference<>(instance);
+			this.simulationChange = simulationChange;
+		}
 		
 		public void metainfoChanged(HexModel source) { }
 
 		public void bytesChanged(HexModel source, long start,
 				long numBytes, int[] values) {
-			instance.fireInvalidated();
+			Instance target = instance.get();
+			if (target != null) target.fireInvalidated(simulationChange);
 		}
 	}
 }

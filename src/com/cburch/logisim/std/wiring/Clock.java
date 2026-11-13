@@ -221,7 +221,7 @@ public class Clock extends InstanceFactory {
 		Value desired = (curValue ? Value.FALSE : Value.TRUE);
 		if (!state.sending.equals(desired)) {
 			state.sending = desired;
-			Instance.getInstanceFor(comp).fireInvalidated();
+			circState.getInstanceState(comp).fireInvalidated();
 			return true;
 		} else {
 			return false;

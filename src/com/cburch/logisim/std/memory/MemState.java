@@ -29,15 +29,21 @@ class MemState implements InstanceData, Cloneable, HexModelListener {
 	private static final int ADDR_WIDTH_PER_CHAR = 10; // pixels wide per address character
 
 	private MemContents contents;
+	private final boolean listenForContentsChanges;
 	private int columns;
 	private long curScroll = 0;
 	private long cursorLoc = -1;
 	private long curAddr = -1;
 
 	MemState(MemContents contents) {
+		this(contents, true);
+	}
+
+	MemState(MemContents contents, boolean listenForContentsChanges) {
 		this.contents = contents;
+		this.listenForContentsChanges = listenForContentsChanges;
 		setBits(contents.getLogLength(), contents.getWidth());
-		contents.addHexModelListener(this);
+		if (listenForContentsChanges) contents.addHexModelListener(this);
 	}
 	
 	@Override
@@ -45,7 +51,7 @@ class MemState implements InstanceData, Cloneable, HexModelListener {
 		try {
 			MemState ret = (MemState) super.clone();
 			ret.contents = contents.clone();
-			ret.contents.addHexModelListener(ret);
+			if (listenForContentsChanges) ret.contents.addHexModelListener(ret);
 			return ret;
 		} catch (CloneNotSupportedException e) { return null; }
 	}

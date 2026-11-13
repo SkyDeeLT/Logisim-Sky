@@ -12,7 +12,6 @@ import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
 import com.cburch.logisim.gui.main.Frame;
-import com.cburch.logisim.gui.opts.OptionsFrame;
 import com.cburch.logisim.gui.prefs.PreferencesFrame;
 import com.cburch.logisim.proj.Project;
 import com.cburch.logisim.proj.ProjectActions;
@@ -127,12 +126,7 @@ class MenuFile extends Menu implements ActionListener {
 		} else if (src == open) {
 			ProjectActions.doOpen(proj == null ? null : proj.getFrame().getCanvas(), proj);
 		} else if (src == close) {
-			Frame frame = proj.getFrame();
-			if (frame.confirmClose()) {
-				frame.dispose();
-				OptionsFrame f = proj.getOptionsFrame(false);
-				if (f != null) f.dispose();
-			}
+			proj.getFrame().requestClose();
 		} else if (src == save) {
 			ProjectActions.doSave(proj);
 		} else if (src == saveAs) {

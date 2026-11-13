@@ -600,7 +600,6 @@ public class ProjectExplorer extends JTree implements LocaleListener {
 		setRowHeight(DarkTheme.scale(23));
 		setShowsRootHandles(true);
 		addMouseListener(myListener);
-		ToolTipManager.sharedInstance().registerComponent(this);
 
 		MySelectionModel selector = new MySelectionModel();
 		selector.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -618,7 +617,21 @@ public class ProjectExplorer extends JTree implements LocaleListener {
 		proj.addLibraryListener(myListener);
 		AppPreferences.GATE_SHAPE.addPropertyChangeListener(myListener);
 		myListener.setFile(proj.getLogisimFile());
+	}
+
+	@Override
+	public void addNotify() {
+		super.addNotify();
+		ToolTipManager.sharedInstance().registerComponent(this);
 		LocaleManager.addLocaleListener(this);
+		localeChanged();
+	}
+
+	@Override
+	public void removeNotify() {
+		ToolTipManager.sharedInstance().unregisterComponent(this);
+		LocaleManager.removeLocaleListener(this);
+		super.removeNotify();
 	}
 	
 	public Tool getSelectedTool() {

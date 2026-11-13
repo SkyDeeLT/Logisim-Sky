@@ -120,6 +120,11 @@ class ToolboxManip implements ProjectExplorer.Listener {
 		myListener.setFile(null, proj.getLogisimFile());
 	}
 
+	void close() {
+		proj.removeProjectListener(myListener);
+		myListener.setFile(myListener.curFile, null);
+	}
+
 	public void selectionChanged(ProjectExplorer.Event event) {
 		Object selected = event.getTarget();
 		if (selected instanceof Tool) {

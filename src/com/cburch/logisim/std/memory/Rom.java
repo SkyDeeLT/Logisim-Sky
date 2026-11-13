@@ -58,7 +58,7 @@ public class Rom extends Mem {
 		MemState ret = (MemState) instance.getData(state);
 		if (ret == null) {
 			MemContents contents = getMemContents(instance);
-			ret = new MemState(contents);
+			ret = new MemState(contents, !state.isDetached());
 			instance.setData(state, ret);
 		}
 		return ret;
@@ -69,7 +69,7 @@ public class Rom extends Mem {
 		MemState ret = (MemState) state.getData();
 		if (ret == null) {
 			MemContents contents = getMemContents(state.getInstance());
-			ret = new MemState(contents);
+			ret = new MemState(contents, !state.isDetached());
 			state.setData(ret);
 		}
 		return ret;
@@ -115,7 +115,7 @@ public class Rom extends Mem {
 	protected void configureNewInstance(Instance instance) {
 		super.configureNewInstance(instance);
 		MemContents contents = getMemContents(instance);
-		MemListener listener = new MemListener(instance);
+		MemListener listener = new MemListener(instance, false);
 		memListeners.put(instance, listener);
 		contents.addHexModelListener(listener);
 	}

@@ -4,7 +4,9 @@
 package com.cburch.logisim.proj;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import javax.swing.JFileChooser;
 
@@ -61,9 +63,9 @@ public class Project {
 				if (data instanceof AddTool) {
 					Object factory = ((AddTool) data).getFactory();
 					if (factory instanceof SubcircuitFactory) {
-						SubcircuitFactory fact = (SubcircuitFactory) factory;
-						if (fact.getSubcircuit() == getCurrentCircuit()) {
-							setCurrentCircuit(file.getMainCircuit());
+						Circuit removed = ((SubcircuitFactory) factory).getSubcircuit();
+						if (event.getSource() == file && !file.contains(removed)) {
+							circuitRemoved(removed);
 						}
 					}
 				}
@@ -130,10 +132,7 @@ public class Project {
 	}
 	
 	public OptionsFrame getOptionsFrame(boolean create) {
-		if (optionsFrame == null || optionsFrame.getLogisimFile() != file) {
-			if (create) optionsFrame = new OptionsFrame(this);
-			else optionsFrame = null;
-		}
+		if (optionsFrame == null && create) optionsFrame = new OptionsFrame(this);
 		return optionsFrame;
 	}
 	
@@ -159,7 +158,7 @@ public class Project {
 			CircuitState ret = stateMap.get(circuit);
 			if (ret == null) {
 				ret = new CircuitState(this, circuit);
-				stateMap.put(circuit, ret);
+				if (containsCircuit(file, circuit)) stateMap.put(circuit, ret);
 			}
 			return ret;
 		}
@@ -268,6 +267,11 @@ public class Project {
 
 	public void setLogisimFile(LogisimFile value) {
 		LogisimFile old = this.file;
+		if (optionsFrame != null && old != value) {
+			OptionsFrame staleOptions = optionsFrame;
+			optionsFrame = null;
+			staleOptions.dispose();
+		}
 		if (old != null) {
 			for (LibraryListener l : fileListeners) {
 				old.removeLibraryListener(l);
@@ -317,7 +321,7 @@ public class Project {
 			}
 		}
 		circuitState = value;
-		stateMap.put(circuitState.getCircuit(), circuitState);
+		if (canRestoreState(value)) stateMap.put(newCircuit, value);
 		simulator.setCircuitState(circuitState);
 		if (circuitChanged) {
 			fireEvent(ProjectEvent.ACTION_SET_CURRENT, oldCircuit, newCircuit);
@@ -334,6 +338,79 @@ public class Project {
 		CircuitState circState = stateMap.get(circuit);
 		if (circState == null) circState = new CircuitState(this, circuit);
 		setCircuitState(circState);
+	}
+
+	private static boolean containsCircuit(Library library, Circuit circuit) {
+		if (library instanceof LogisimFile) {
+			if (((LogisimFile) library).contains(circuit)) return true;
+		} else {
+			for (Tool tool : library.getTools()) {
+				if (tool instanceof AddTool && ((AddTool) tool).getFactory(false) == circuit.getSubcircuitFactory()) {
+					return true;
+				}
+			}
+		}
+		for (Library child : library.getLibraries()) {
+			if (containsCircuit(child, circuit)) return true;
+		}
+		return false;
+	}
+
+	private boolean canRestoreState(CircuitState state) {
+		if (state == null) return false;
+		if (!containsCircuit(file, state.getSimulationRoot().getCircuit())) return false;
+		for (CircuitState ancestor = state; ancestor != null; ancestor = ancestor.getParentState()) {
+			if (!containsCircuit(file, ancestor.getCircuit())) return false;
+		}
+		return true;
+	}
+
+	private static boolean referencesCircuit(CircuitState state, Circuit circuit) {
+		if (state == null) return false;
+		if (state.getSimulationRoot().getCircuit() == circuit) return true;
+		for (CircuitState ancestor = state; ancestor != null; ancestor = ancestor.getParentState()) {
+			if (ancestor.getCircuit() == circuit) return true;
+		}
+		return false;
+	}
+
+	private void circuitRemoved(Circuit circuit) {
+		Iterator<Map.Entry<Circuit,CircuitState>> entries = stateMap.entrySet().iterator();
+		while (entries.hasNext()) {
+			Map.Entry<Circuit,CircuitState> entry = entries.next();
+			CircuitState state = entry.getValue();
+			if (referencesCircuit(state, circuit)) {
+				if (state == circuitState || entry.getKey() == circuit) {
+					entries.remove();
+				} else {
+					entry.setValue(state.cloneState());
+				}
+			}
+		}
+		if (referencesCircuit(circuitState, circuit)) {
+			if (getCurrentCircuit() == circuit) {
+				setCurrentCircuit(file.getMainCircuit());
+			} else {
+				setCircuitState(circuitState.cloneState());
+			}
+		}
+	}
+
+	public Map<Circuit,CircuitState> removeCircuit(Circuit circuit) {
+		// The caller keeps these states only while the removal can be undone.
+		Map<Circuit,CircuitState> removedStates = new HashMap<Circuit,CircuitState>();
+		for (CircuitState state : stateMap.values()) {
+			if (referencesCircuit(state, circuit)) removedStates.put(state.getCircuit(), state);
+		}
+		file.removeCircuit(circuit);
+		return removedStates;
+	}
+
+	public void restoreCircuitStates(Map<Circuit,CircuitState> states) {
+		if (states == null) return;
+		for (Map.Entry<Circuit,CircuitState> entry : states.entrySet()) {
+			if (canRestoreState(entry.getValue())) stateMap.put(entry.getKey(), entry.getValue());
+		}
 	}
 
 	public void setTool(Tool value) {
@@ -399,11 +476,15 @@ public class Project {
 	public void undoAction() {
 		if (undoLog != null && undoLog.size() > 0) {
 			ActionData data = undoLog.removeLast();
-			setCircuitState(data.circuitState);
+			boolean restoreBeforeUndo = canRestoreState(data.circuitState);
+			if (restoreBeforeUndo) setCircuitState(data.circuitState);
 			Action action = data.action;
 			if (action.isModification()) --undoMods;
 			fireEvent(new ProjectEvent(ProjectEvent.UNDO_START, this, action));
 			action.undo(this);
+			if (!restoreBeforeUndo && canRestoreState(data.circuitState)) {
+				setCircuitState(data.circuitState);
+			}
 			redoLog.add(data);
 			file.setDirty(isFileDirty());
 			fireEvent(new ProjectEvent(ProjectEvent.UNDO_COMPLETE, this, action));
@@ -413,7 +494,7 @@ public class Project {
 	public void redoAction() {
 		if (redoLog != null && redoLog.size() > 0) {
 			ActionData data = redoLog.removeLast();
-			setCircuitState(data.circuitState);
+			if (canRestoreState(data.circuitState)) setCircuitState(data.circuitState);
 			Action action = data.action;
 			fireEvent(new ProjectEvent(ProjectEvent.ACTION_START, this, action));
 			action.doIt(this);

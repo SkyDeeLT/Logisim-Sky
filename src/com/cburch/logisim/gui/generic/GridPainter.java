@@ -8,13 +8,13 @@ import com.cburch.logisim.DarkTheme;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.image.MemoryImageSource;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Arrays;
 
 public class GridPainter {
 	public static final String ZOOM_PROPERTY = "zoom";
@@ -41,9 +41,9 @@ public class GridPainter {
 	private boolean showGrid;
 	private int gridSize;
 	private double zoomFactor;
-	private Image gridImage;
-	private int gridImageWidth;
-	private int themeRevisionSeen;
+	private BufferedImage gridTile;
+	private int tileSpacing;
+	private Color tileColor;
 	
 	public GridPainter(Component destination) {
 		this.destination = destination;
@@ -51,8 +51,6 @@ public class GridPainter {
 		showGrid = true;
 		gridSize = 10;
 		zoomFactor = 1.0;
-		themeRevisionSeen = DarkTheme.getThemeRevision();
-		updateGridImage(gridSize, zoomFactor);
 	}
 	
 	public void addPropertyChangeListener(String prop,
@@ -84,7 +82,6 @@ public class GridPainter {
 		double oldValue = zoomFactor;
 		if (oldValue != value) {
 			zoomFactor = value;
-			updateGridImage(gridSize, value);
 			support.firePropertyChange(ZOOM_PROPERTY, Double.valueOf(oldValue),
 					Double.valueOf(value));
 		}
@@ -108,9 +105,9 @@ public class GridPainter {
 			if (model != null) {
 				model.addPropertyChangeListener(ZoomModel.ZOOM, listener);
 				model.addPropertyChangeListener(ZoomModel.SHOW_GRID, listener);
+				setShowGrid(model.getShowGrid());
+				setZoomFactor(model.getZoomFactor());
 			}
-			setShowGrid(model.getShowGrid());
-			setZoomFactor(model.getZoomFactor());
 			destination.repaint();
 		}
 	}
@@ -122,20 +119,50 @@ public class GridPainter {
 
 		if (!showGrid || clip == null) return;
 
-		/*
-		 * Sky UI deliberately paints grid dots directly instead of using the old
-		 * cached MemoryImageSource tile. On several Java/Swing pipelines that
-		 * image cache flattens transparent pixels against the canvas colour that
-		 * existed when the tile was created. After a live theme switch the cached
-		 * tile can therefore repaint the entire workspace with the previous theme
-		 * (most visibly: Light UI + Midnight canvas). Direct dots are cheap for a
-		 * viewport-sized grid and keep the background genuinely transparent.
-		 */
-		themeRevisionSeen = DarkTheme.getThemeRevision();
-		paintGridOld(g, size, zoom, clip);
+		double spacing = size * zoom;
+		// A repeating tile preserves dot positions for integral spacing and pixel-aligned output.
+		if (spacing >= 1 && spacing <= 64 && spacing == (int) spacing
+				&& clip.x >= 0 && clip.y >= 0 && isPixelAligned(g)) {
+			paintTiledGrid(g, clip, (int) spacing);
+		} else {
+			paintGridDots(g, size, zoom, clip);
+		}
 	}
-	
-	private void paintGridOld(Graphics g, int size, double f, Rectangle clip) {
+
+	private static boolean isPixelAligned(Graphics g) {
+		if (!(g instanceof Graphics2D)) return false;
+		AffineTransform transform = ((Graphics2D) g).getTransform();
+		return (transform.getType() & ~(AffineTransform.TYPE_TRANSLATION
+				| AffineTransform.TYPE_UNIFORM_SCALE | AffineTransform.TYPE_GENERAL_SCALE)) == 0
+				&& transform.getScaleX() == Math.rint(transform.getScaleX())
+				&& transform.getScaleY() == Math.rint(transform.getScaleY())
+				&& transform.getTranslateX() == Math.rint(transform.getTranslateX())
+				&& transform.getTranslateY() == Math.rint(transform.getTranslateY());
+	}
+
+	private void paintTiledGrid(Graphics g, Rectangle clip, int spacing) {
+		Color color = DarkTheme.GRID;
+		if (gridTile == null || tileSpacing != spacing || !color.equals(tileColor)) {
+			int side = Math.max(1, 192 / spacing) * spacing;
+			gridTile = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
+			for (int y = 0; y < side; y += spacing) {
+				for (int x = 0; x < side; x += spacing) gridTile.setRGB(x, y, color.getRGB());
+			}
+			tileSpacing = spacing;
+			tileColor = color;
+		}
+		int side = gridTile.getWidth();
+		int right = clip.x + clip.width;
+		int bottom = clip.y + clip.height;
+		for (int y = clip.y / side * side; y < bottom; y += side) {
+			for (int x = clip.x / side * side; x < right; x += side) {
+				g.drawImage(gridTile, x, y, null);
+			}
+		}
+		g.setColor(color);
+	}
+
+	private void paintGridDots(Graphics g, int size, double f, Rectangle clip) {
 		g.setColor(DarkTheme.GRID);
 		if (f == 1.0) {
 			int start_x = ((clip.x + 9) / size) * size;
@@ -151,7 +178,6 @@ public class GridPainter {
 			int x1 = x0 + (int) (clip.width / f);
 			int y0 = size * (int) Math.ceil(clip.y / f / size);
 			int y1 = y0 + (int) (clip.height / f);
-			if (f <= 0.5) g.setColor(DarkTheme.GRID);
 			for (double x = x0; x < x1; x += size) {
 				for (double y = y0; y < y1; y += size) {
 					int sx = (int) Math.round(f * x);
@@ -159,9 +185,8 @@ public class GridPainter {
 					g.fillRect(sx, sy, 1, 1);
 				}
 			}
-			if (f <= 0.5) { // make every 5th pixel darker
+			if (f <= 0.5) {
 				int size5 = 5 * size;
-				g.setColor(DarkTheme.GRID);
 				x0 = size5 * (int) Math.ceil(clip.x / f / size5);
 				y0 = size5 * (int) Math.ceil(clip.y / f / size5);
 				for (double x = x0; x < x1; x += size5) {
@@ -173,92 +198,7 @@ public class GridPainter {
 				}
 			}               
 			
-			/* Original code by Carl Burch
-			int x0 = 10 * (int) Math.ceil(clip.x / f / 10);
-			int x1 = x0 + (int)(clip.width / f);
-			int y0 = 10 * (int) Math.ceil(clip.y / f / 10);
-			int y1 = y0 + (int) (clip.height / f);
-			int s = f > 0.5 ? 1 : f > 0.25 ? 2 : 3;
-			int i0 = s - ((x0 + 10*s - 1) % (s * 10)) / 10 - 1;
-			int j0 = s - ((y1 + 10*s - 1) % (s * 10)) / 10 - 1;
-			for (int i = 0; i < s; i++) {
-				for (int x = x0+i*10; x < x1; x += s*10) {
-					for (int j = 0; j < s; j++) {
-						g.setColor(i == i0 && j == j0 ? Color.gray : GRID_ZOOMED_OUT_COLOR);
-						for (int y = y0+j*10; y < y1; y += s*10) {
-							int sx = (int) Math.round(f * x);
-							int sy = (int) Math.round(f * y);
-							g.fillRect(sx, sy, 1, 1);
-						}
-					}
-				}
-			}
-			*/
 		}
 	}
 
-	//
-	// creating the grid image
-	//
-	private void updateGridImage(int size, double f) {
-		double ww = f * size * 5;
-		while (2 * ww < 150) ww *= 2;
-		int w = (int) Math.round(ww);
-		int[] pix = new int[w * w];
-		Arrays.fill(pix, 0x00000000);
-
-		if (f == 1.0) {
-			int lineStep = size * w;
-			for (int j = 0; j < pix.length; j += lineStep) {
-				for (int i = 0; i < w; i += size) {
-					pix[i + j] = DarkTheme.GRID.getRGB();
-				}
-			}
-		} else {
-			int off0 = 0;
-			int off1 = 1;
-			if (f >= 2.0) { // we'll draw several pixels for each grid point
-				int num = (int) (f + 0.001);
-				off0 = -(num / 2);
-				off1 = off0 + num; 
-			}
-			
-			int dotColor = f <= 0.5 ? DarkTheme.GRID_STRONG.getRGB() : DarkTheme.GRID.getRGB();
-			for (int j = 0; true; j += size) {
-				int y = (int) Math.round(f * j);
-				if (y + off0 >= w) break;
-				
-				for (int yo = y + off0; yo < y + off1; yo++) {
-					if (yo >= 0 && yo < w) {
-						int base = yo * w;
-						for (int i = 0; true; i += size) {
-							int x = (int) Math.round(f * i);
-							if (x + off0 >= w) break;
-							for (int xo = x + off0; xo < x + off1; xo++) {
-								if (xo >= 0 && xo < w) {
-									pix[base + xo] = dotColor;
-								}
-							}
-						}
-					}
-				}
-			}
-			if (f <= 0.5) { // repaint over every 5th pixel so it is darker
-				int size5 = size * 5;
-				for (int j = 0; true; j += size5) {
-					int y = (int) Math.round(f * j);
-					if (y >= w) break;
-					y *= w;
-					
-					for (int i = 0; true; i += size5) {
-						int x = (int) Math.round(f * i);
-						if (x >= w) break;
-						pix[y + x] = DarkTheme.GRID.getRGB();
-					}
-				}
-			}
-		}
-		gridImage = destination.createImage(new MemoryImageSource(w, w, pix, 0, w));
-		gridImageWidth = w;
-	}
 }

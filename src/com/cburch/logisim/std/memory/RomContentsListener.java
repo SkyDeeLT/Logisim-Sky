@@ -3,6 +3,8 @@
 
 package com.cburch.logisim.std.memory;
 
+import java.lang.ref.WeakReference;
+
 import com.cburch.hex.HexModel;
 import com.cburch.hex.HexModelListener;
 import com.cburch.logisim.proj.Action;
@@ -90,11 +92,15 @@ class RomContentsListener implements HexModelListener {
 		}
 	}
 
-	Project proj;
+	private final WeakReference<Project> project;
 	boolean enabled = true;
 	
 	RomContentsListener(Project proj) {
-		this.proj = proj;
+		this.project = new WeakReference<Project>(proj);
+	}
+
+	Project getProject() {
+		return project.get();
 	}
 	
 	void setEnabled(boolean value) {
@@ -108,6 +114,7 @@ class RomContentsListener implements HexModelListener {
 	
 	public void bytesChanged(HexModel source, long start,
 			long numBytes, int[] oldValues) {
+		Project proj = getProject();
 		if (enabled && proj != null && oldValues != null) {
 			// this change needs to be logged in the undo log
 			int[] newValues = new int[oldValues.length];

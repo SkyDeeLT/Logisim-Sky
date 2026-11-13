@@ -29,6 +29,10 @@ public class SimulationTreeModel implements TreeModel {
 	public CircuitState getRootState() {
 		return root.getCircuitState();
 	}
+
+	void close() {
+		root.close();
+	}
 	
 	public CircuitState getCurrentView() {
 		return currentView;

@@ -9,7 +9,6 @@ class SimulatorTicker extends Thread {
 	private int millisPerTickPhase;
 
 	private boolean shouldTick;
-	private int ticksPending;
 	private boolean complete;
 	
 	public SimulatorTicker(Simulator.PropagationManager manager) {
@@ -17,7 +16,6 @@ class SimulatorTicker extends Thread {
 		ticksPerTickPhase = 1;
 		millisPerTickPhase = 1000;
 		shouldTick = false;
-		ticksPending = 0;
 		complete = false;
 	}
 	
@@ -36,55 +34,27 @@ class SimulatorTicker extends Thread {
 		notifyAll();
 	}
 	
-	public synchronized void tickOnce() {
-		ticksPending++;
-		notifyAll();
-	}
-
 	@Override
 	public void run() {
 		long lastTick = System.currentTimeMillis();
 		while (true) {
-			boolean curShouldTick = shouldTick;
-			int millis = millisPerTickPhase;
-			int ticks = ticksPerTickPhase;
-			try {
-				synchronized(this) {
-					curShouldTick = shouldTick;
-					millis = millisPerTickPhase;
-					ticks = ticksPerTickPhase;
-					while (!curShouldTick && ticksPending == 0
-							&& !complete) {
+			int millis;
+			int ticks;
+			synchronized (this) {
+				while (!shouldTick && !complete) {
+					try {
 						wait();
-						curShouldTick = shouldTick;
-						millis = millisPerTickPhase;
-						ticks = ticksPerTickPhase;
-					}
+					} catch (InterruptedException e) { }
 				}
-			} catch (InterruptedException e) { }
-			
-			if (complete) break;
-			
-			int toTick;
-			long now = System.currentTimeMillis();
-			if (curShouldTick && now - lastTick >= millis) {
-				toTick = ticks;
-			} else {
-				toTick = ticksPending;
+				if (complete) return;
+				millis = millisPerTickPhase;
+				ticks = ticksPerTickPhase;
 			}
 
-			if (toTick > 0) {
+			long now = System.currentTimeMillis();
+			if (now - lastTick >= millis) {
 				lastTick = now;
-				for (int i = 0; i < toTick; i++) {
-					manager.requestTick();
-				}
-				synchronized(this) {
-					if (ticksPending > toTick) ticksPending -= toTick;
-					else ticksPending = 0;
-				}
-				// we fire tickCompleted in this thread so that other
-				// objects (in particular the repaint process) can slow
-				// the thread down.
+				manager.requestAutomaticTicks(ticks);
 			}
 
 			try {

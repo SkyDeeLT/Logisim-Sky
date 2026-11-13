@@ -1,4 +1,4 @@
-# Building Logisim Sky 1.0
+# Building Logisim Sky 1.0.1
 
 Logisim Sky targets Java 8 bytecode and is based on the classic Logisim 2.7.1 source tree with the Sky desktop extensions included in this repository.
 
@@ -24,7 +24,7 @@ python tools/build.py
 The resulting file is written to:
 
 ```text
-dist/Logisim-Sky-1.0.jar
+dist/Logisim-Sky-1.0.1.jar
 ```
 
 The build helper:
@@ -46,11 +46,11 @@ packaging/launch4j.xml
 The expected output name is:
 
 ```text
-Logisim-Sky-1.0-Windows-x64.exe
+Logisim-Sky-1.0.1-Windows-x64.exe
 ```
 
 You may need to adjust the local Launch4j executable path depending on your system.
 
 ## Important compatibility detail
 
-`com.cburch.logisim.Main.VERSION` remains `2.7.1`. The Sky release version is tracked separately as `SKY_UI_VERSION = "1.0"`. This is intentional so classic `.circ` project compatibility is preserved.
+`com.cburch.logisim.Main.VERSION` remains `2.7.1` for classic `.circ` compatibility. The Sky release version is tracked in `SKY_UI_VERSION`.

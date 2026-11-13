@@ -82,6 +82,7 @@ public class LogisimMenuBar extends JMenuBar {
 	private MenuProject project;
 	private MenuSimulate simulate;
 	private MenuHelp help;
+	private WindowMenu window;
 	
 	public LogisimMenuBar(JFrame parent, Project proj) {
 		this.parent = parent;
@@ -93,11 +94,38 @@ public class LogisimMenuBar extends JMenuBar {
 		add(edit = new MenuEdit(this));
 		add(project = new MenuProject(this));
 		add(simulate = new MenuSimulate(this));
-		add(new WindowMenu(parent));
+		add(window = new WindowMenu(parent));
 		add(help = new MenuHelp(this));
 		
-		LocaleManager.addLocaleListener(listener);
+		if (parent == null) registerLocaleAndWindowMenu();
 		listener.localeChanged();
+	}
+
+	private void registerLocaleAndWindowMenu() {
+		LocaleManager.addLocaleListener(listener);
+		window.register();
+	}
+
+	@Override
+	public void addNotify() {
+		super.addNotify();
+		if (parent != null) {
+			registerLocaleAndWindowMenu();
+			listener.localeChanged();
+		}
+	}
+
+	@Override
+	public void removeNotify() {
+		if (parent != null) {
+			LocaleManager.removeLocaleListener(listener);
+			window.unregister();
+		}
+		super.removeNotify();
+	}
+
+	public void dispose() {
+		simulate.dispose();
 	}
 	
 

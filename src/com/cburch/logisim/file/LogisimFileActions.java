@@ -4,8 +4,10 @@
 package com.cburch.logisim.file;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.cburch.logisim.circuit.Circuit;
+import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.data.Attribute;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.proj.Action;
@@ -57,6 +59,7 @@ public class LogisimFileActions {
 
 	private static class AddCircuit extends Action {
 		private Circuit circuit;
+		private Map<Circuit,CircuitState> removedStates;
 
 		AddCircuit(Circuit circuit) {
 			this.circuit = circuit;
@@ -70,17 +73,20 @@ public class LogisimFileActions {
 		@Override
 		public void doIt(Project proj) {
 			proj.getLogisimFile().addCircuit(circuit);
+			proj.restoreCircuitStates(removedStates);
+			removedStates = null;
 		}
 
 		@Override
 		public void undo(Project proj) {
-			proj.getLogisimFile().removeCircuit(circuit);
+			removedStates = proj.removeCircuit(circuit);
 		}
 	}
 
 	private static class RemoveCircuit extends Action {
 		private Circuit circuit;
 		private int index;
+		private Map<Circuit,CircuitState> removedStates;
 
 		RemoveCircuit(Circuit circuit) {
 			this.circuit = circuit;
@@ -94,12 +100,14 @@ public class LogisimFileActions {
 		@Override
 		public void doIt(Project proj) {
 			index = proj.getLogisimFile().getCircuits().indexOf(circuit);
-			proj.getLogisimFile().removeCircuit(circuit);
+			removedStates = proj.removeCircuit(circuit);
 		}
 
 		@Override
 		public void undo(Project proj) {
 			proj.getLogisimFile().addCircuit(circuit, index);
+			proj.restoreCircuitStates(removedStates);
+			removedStates = null;
 		}
 	}
 

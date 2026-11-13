@@ -150,6 +150,7 @@ public class HexFrame extends LFrame {
 	private WindowMenuManager windowManager = new WindowMenuManager();
 	private EditListener editListener = new EditListener();
 	private MyListener myListener = new MyListener();
+	private final Project project;
 	private HexModel model;
 	private HexEditor editor;
 	private JButton open = new JButton();
@@ -157,7 +158,8 @@ public class HexFrame extends LFrame {
 	private JButton close = new JButton();
 
 	public HexFrame(Project proj, HexModel model) {
-		setDefaultCloseOperation(HIDE_ON_CLOSE);
+		this.project = proj;
+		setDefaultCloseOperation(proj == null ? DISPOSE_ON_CLOSE : HIDE_ON_CLOSE);
 
 		LogisimMenuBar menubar = new LogisimMenuBar(this, proj);
 		setJMenuBar(menubar);
@@ -204,6 +206,21 @@ public class HexFrame extends LFrame {
 		editListener.register(menubar);
 	}
 	
+	public Project getProject() {
+		return project;
+	}
+
+	@Override
+	public void dispose() {
+		windowManager.frameClosed(this);
+		LocaleManager.removeLocaleListener(windowManager);
+		LocaleManager.removeLocaleListener(myListener);
+		editor.getCaret().removeChangeListener(editListener);
+		editor.setModel(null);
+		((LogisimMenuBar) getJMenuBar()).dispose();
+		super.dispose();
+	}
+
 	@Override
 	public void setVisible(boolean value) {
 		if (value && !isVisible()) {

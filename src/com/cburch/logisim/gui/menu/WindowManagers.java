@@ -63,6 +63,12 @@ public class WindowManagers {
 		public JFrame getJFrame(boolean create) {
 			return proj.getFrame();
 		}
+
+		void close() {
+			frameClosed(getJFrame(false));
+			proj.removeProjectListener(this);
+			proj.removeLibraryListener(this);
+		}
 		
 		public void projectChanged(ProjectEvent event) {
 			if (event.getAction() == ProjectEvent.ACTION_SET_FILE) {
@@ -83,9 +89,7 @@ public class WindowManagers {
 		HashSet<Project> closed = new HashSet<Project>(projectMap.keySet());
 		closed.removeAll(nowOpen);
 		for (Project proj : closed) {
-			ProjectManager manager = projectMap.get(proj);
-			manager.frameClosed(manager.getJFrame(false));
-			projectMap.remove(proj);
+			projectMap.remove(proj).close();
 		}
 		
 		HashSet<Project> opened = new LinkedHashSet<Project>(nowOpen);

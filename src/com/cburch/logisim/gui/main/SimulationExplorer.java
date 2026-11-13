@@ -52,6 +52,7 @@ class SimulationExplorer extends JPanel
 			Simulator sim = project.getSimulator();
 			CircuitState root = sim.getCircuitState();
 			if (model.getRootState() != root) {
+				model.close();
 				model = new SimulationTreeModel(root);
 				tree.setModel(model);
 			}
@@ -61,6 +62,11 @@ class SimulationExplorer extends JPanel
 				tree.scrollPathToVisible(path);
 			}
 		}
+	}
+
+	void close() {
+		project.removeProjectListener(this);
+		model.close();
 	}
 	
 	//

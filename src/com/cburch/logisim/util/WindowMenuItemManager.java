@@ -14,24 +14,27 @@ public abstract class WindowMenuItemManager {
 	private class MyListener implements WindowListener {
 		public void windowOpened(WindowEvent event) { }
 		public void windowClosing(WindowEvent event) {
-			JFrame frame = getJFrame(false);
+			JFrame frame = (JFrame) event.getWindow();
 			if (frame.getDefaultCloseOperation() == JFrame.HIDE_ON_CLOSE) {
+				WindowMenuManager.unsetCurrentManager(WindowMenuItemManager.this);
 				removeFromManager();
 			}
 		}
 		
 		public void windowClosed(WindowEvent event) {
-			removeFromManager();
+			frameClosed((JFrame) event.getWindow());
 		}
 		
 		public void windowDeiconified(WindowEvent event) { }
 
 		public void windowIconified(WindowEvent event) {
+			if (!event.getWindow().isDisplayable()) return;
 			addToManager();
 			WindowMenuManager.setCurrentManager(WindowMenuItemManager.this);
 		}
 
 		public void windowActivated(WindowEvent event) {
+			if (!event.getWindow().isDisplayable()) return;
 			addToManager();
 			WindowMenuManager.setCurrentManager(WindowMenuItemManager.this);
 		}
@@ -69,11 +72,12 @@ public abstract class WindowMenuItemManager {
 	}
 
 	public void frameClosed(JFrame frame) {
+		WindowMenuManager.unsetCurrentManager(this);
+		if (listenerAdded) {
+			frame.removeWindowListener(myListener);
+			listenerAdded = false;
+		}
 		if (!persistent) {
-			if (listenerAdded) {
-				frame.removeWindowListener(myListener);
-				listenerAdded = false;
-			}
 			removeFromManager();
 		}
 	}
@@ -88,10 +92,6 @@ public abstract class WindowMenuItemManager {
 	private void removeFromManager() {
 		if (!persistent && inManager) {
 			inManager = false;
-			for (WindowMenu menu : WindowMenuManager.getMenus()) {
-				JRadioButtonMenuItem menuItem = menuItems.get(menu);
-				menu.removeMenuItem(this, menuItem);
-			}
 			WindowMenuManager.removeManager(this);
 		}
 	}

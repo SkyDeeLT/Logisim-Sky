@@ -85,9 +85,16 @@ class InstanceStateImpl implements InstanceState {
 	}
 	
 	public void fireInvalidated() {
-		if (component instanceof InstanceComponent) {
-			((InstanceComponent) component).fireInvalidated();
+		if (circuitState.isDetached()) {
+			circuitState.markComponentAsDirty(component);
+		} else if (component instanceof InstanceComponent) {
+			((InstanceComponent) component).fireInvalidated(true);
 		}
+	}
+
+	@Override
+	public boolean isDetached() {
+		return circuitState.isDetached();
 	}
 	
 	public boolean isCircuitRoot() {

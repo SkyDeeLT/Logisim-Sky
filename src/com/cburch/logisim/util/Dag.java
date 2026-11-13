@@ -67,13 +67,12 @@ public class Dag {
 	}
 
 	public void removeNode(Object data) {
-		Node n = findNode(data);
+		Node n = nodes.remove(data);
 		if (n == null) return;
 
-		for (Iterator<Node> it = n.succs.iterator(); it.hasNext(); ) {
-			Node succ = it.next();
+		for (Node succ : n.succs) {
 			--(succ.numPreds);
-			if (succ.numPreds == 0 && succ.succs.isEmpty()) it.remove();
+			if (succ.numPreds == 0 && succ.succs.isEmpty()) nodes.remove(succ.data);
 		}
 
 		if (n.numPreds > 0) {

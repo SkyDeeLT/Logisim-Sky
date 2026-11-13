@@ -39,12 +39,32 @@ class Selection {
 	
 	public void add(SelectionItem item) {
 		components.add(item);
+		if (model.isSelected()) item.attach();
 		model.fireSelectionChanged(new ModelEvent());
 	}
 	
 	public void remove(int index) {
-		components.remove(index);
+		SelectionItem item = components.remove(index);
+		if (model.isSelected()) item.detach();
 		model.fireSelectionChanged(new ModelEvent());
+	}
+
+	void attach() {
+		boolean removed = false;
+		for (java.util.Iterator<SelectionItem> it = components.iterator(); it.hasNext(); ) {
+			SelectionItem item = it.next();
+			if (item.exists()) {
+				item.attach();
+			} else {
+				it.remove();
+				removed = true;
+			}
+		}
+		if (removed) model.fireSelectionChanged(new ModelEvent());
+	}
+
+	void detach() {
+		for (SelectionItem item : components) item.detach();
 	}
 	
 	public void move(int fromIndex, int toIndex) {

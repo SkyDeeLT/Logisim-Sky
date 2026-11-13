@@ -159,11 +159,15 @@ class InstanceComponent implements Component, AttributeListener, ToolTipMaker {
 	}
 	
 	void fireInvalidated() {
+		fireInvalidated(false);
+	}
+
+	void fireInvalidated(boolean simulationChange) {
 		EventSourceWeakSupport<ComponentListener> ls = listeners;
 		if (ls != null) {
 			ComponentEvent e = null;
 			for (ComponentListener l : ls) {
-				if (e == null) e = new ComponentEvent(this);
+				if (e == null) e = new ComponentEvent(this, simulationChange);
 				l.componentInvalidated(e);
 			}
 		}

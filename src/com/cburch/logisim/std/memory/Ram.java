@@ -6,11 +6,14 @@ package com.cburch.logisim.std.memory;
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.data.Attribute;
-import com.cburch.logisim.data.AttributeEvent;
-import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.AttributeSets;
@@ -55,6 +58,7 @@ public class Ram extends Mem {
 	private static final int DIN = MEM_INPUTS + 4;
 
 	private static Object[][] logOptions = new Object[9][];
+	private final Map<Instance, Set<RamState>> liveStates = new WeakHashMap<>();
 
 	public Ram() {
 		super("RAM", Strings.getter("ramComponent"), 3);
@@ -72,6 +76,28 @@ public class Ram extends Mem {
 	protected void instanceAttributeChanged(Instance instance, Attribute<?> attr) {
 		super.instanceAttributeChanged(instance, attr);
 		configurePorts(instance);
+		if (attr == ADDR_ATTR || attr == DATA_ATTR) {
+			int addressWidth = instance.getAttributeValue(ADDR_ATTR).getWidth();
+			int dataWidth = instance.getAttributeValue(DATA_ATTR).getWidth();
+			ArrayList<RamState> snapshot;
+			synchronized (liveStates) {
+				Set<RamState> states = liveStates.get(instance);
+				if (states == null) return;
+				snapshot = new ArrayList<>(states);
+			}
+			for (RamState state : snapshot) state.getContents().setDimensions(addressWidth, dataWidth);
+		}
+	}
+
+	private void trackState(Instance instance, RamState state) {
+		if (instance == null || state.trackedInstance == instance) return;
+		synchronized (liveStates) {
+			Set<RamState> previous = liveStates.get(state.trackedInstance);
+			if (previous != null) previous.remove(state);
+			liveStates.computeIfAbsent(instance,
+					ignored -> Collections.newSetFromMap(new WeakHashMap<>())).add(state);
+			state.trackedInstance = instance;
+		}
 	}
 	
 	@Override
@@ -118,14 +144,13 @@ public class Ram extends Mem {
 		BitWidth dataBits = state.getAttributeValue(DATA_ATTR);
 
 		RamState myState = (RamState) state.getData();
+		Instance instance = state.isDetached() ? null : state.getInstance();
 		if (myState == null) {
 			MemContents contents = MemContents.create(addrBits.getWidth(), dataBits.getWidth());
-			Instance instance = state.getInstance();
-			myState = new RamState(instance, contents, new MemListener(instance));
+			myState = new RamState(instance, contents);
 			state.setData(myState);
-		} else {
-			myState.setRam(state.getInstance());
 		}
+		trackState(instance, myState);
 		return myState;
 	}
 
@@ -135,13 +160,13 @@ public class Ram extends Mem {
 		BitWidth dataBits = instance.getAttributeValue(DATA_ATTR);
 
 		RamState myState = (RamState) instance.getData(state);
+		Instance parent = state.isDetached() ? null : instance;
 		if (myState == null) {
 			MemContents contents = MemContents.create(addrBits.getWidth(), dataBits.getWidth());
-			myState = new RamState(instance, contents, new MemListener(instance));
+			myState = new RamState(parent, contents);
 			instance.setData(state, myState);
-		} else {
-			myState.setRam(instance);
 		}
+		trackState(parent, myState);
 		return myState;
 	}
 
@@ -222,46 +247,36 @@ public class Ram extends Mem {
 		}
 	}
 
-	private static class RamState extends MemState
-			implements InstanceData, AttributeListener {
-		private Instance parent;
-		private MemListener listener;
+	private static class RamState extends MemState implements InstanceData {
+		private volatile Instance trackedInstance;
+		private final MemListener listener;
 		private HexFrame hexFrame = null;
 		private ClockState clockState;
 
-		RamState(Instance parent, MemContents contents, MemListener listener) {
-			super(contents);
-			this.parent = parent;
-			this.listener = listener;
+		RamState(Instance parent, MemContents contents) {
+			super(contents, parent != null);
+			this.listener = parent == null ? null : new MemListener(parent, true);
 			this.clockState = new ClockState();
-			if (parent != null) parent.getAttributeSet().addAttributeListener(this);
-			contents.addHexModelListener(listener);
-		}
-		
-		void setRam(Instance value) {
-			if (parent == value) return;
-			if (parent != null) parent.getAttributeSet().removeAttributeListener(this);
-			parent = value;
-			if (value != null) value.getAttributeSet().addAttributeListener(this);
+			if (listener != null) contents.addHexModelListener(listener);
 		}
 		
 		@Override
 		public RamState clone() {
 			RamState ret = (RamState) super.clone();
-			ret.parent = null;
+			ret.trackedInstance = null;
 			ret.clockState = this.clockState.clone();
-			ret.getContents().addHexModelListener(listener);
+			if (listener != null) ret.getContents().addHexModelListener(listener);
 			return ret;
 		}
 		
 		// Retrieves a HexFrame for editing within a separate window
 		public HexFrame getHexFrame(Project proj) {
-			if (hexFrame == null) {
+			if (hexFrame == null || !hexFrame.isDisplayable()) {
 				hexFrame = new HexFrame(proj, getContents());
 				hexFrame.addWindowListener(new WindowAdapter() {
 					@Override
 					public void windowClosed(WindowEvent e) {
-						hexFrame = null;
+						if (hexFrame == e.getWindow()) hexFrame = null;
 					}
 				});
 			}
@@ -273,15 +288,6 @@ public class Ram extends Mem {
 		//
 		public boolean setClock(Value newClock, Object trigger) {
 			return clockState.updateClock(newClock, trigger);
-		}
-
-		public void attributeListChanged(AttributeEvent e) { }
-
-		public void attributeValueChanged(AttributeEvent e) {
-			AttributeSet attrs = e.getSource();
-			BitWidth addrBits = attrs.getValue(Mem.ADDR_ATTR);
-			BitWidth dataBits = attrs.getValue(Mem.DATA_ATTR);
-			getContents().setDimensions(addrBits.getWidth(), dataBits.getWidth());
 		}
 	}
 	

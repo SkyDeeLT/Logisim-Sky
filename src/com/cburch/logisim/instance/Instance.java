@@ -96,4 +96,8 @@ public class Instance {
 	public void fireInvalidated() {
 		comp.fireInvalidated();
 	}
+
+	public void fireInvalidated(boolean simulationChange) {
+		comp.fireInvalidated(simulationChange);
+	}
 }

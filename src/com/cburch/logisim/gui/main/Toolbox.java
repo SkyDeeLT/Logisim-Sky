@@ -14,6 +14,7 @@ import com.cburch.logisim.tools.Tool;
 
 class Toolbox extends JPanel {
 	private ProjectExplorer toolbox;
+	private ToolboxManip manipulator;
 	
 	Toolbox(Project proj, MenuListener menu) {
 		super(new BorderLayout());
@@ -23,11 +24,16 @@ class Toolbox extends JPanel {
 		add(toolbar, BorderLayout.NORTH);
 		
 		toolbox = new ProjectExplorer(proj);
-		toolbox.setListener(new ToolboxManip(proj, toolbox));
+		manipulator = new ToolboxManip(proj, toolbox);
+		toolbox.setListener(manipulator);
 		add(new JScrollPane(toolbox), BorderLayout.CENTER);
 	}
 	
 	void setHaloedTool(Tool value) {
 		toolbox.setHaloedTool(value);
+	}
+
+	void close() {
+		manipulator.close();
 	}
 }

@@ -296,7 +296,7 @@ class MenuSimulate extends Menu {
 
 			if (oldSim != null) oldSim.removeSimulatorListener(myListener);
 			if (currentSim != null) currentSim.addSimulatorListener(myListener);
-			myListener.simulatorStateChanged(new SimulatorEvent(sim));
+			if (currentSim != null) myListener.simulatorStateChanged(new SimulatorEvent(sim));
 		}
 
 		clearItems(downStateItems);
@@ -312,6 +312,10 @@ class MenuSimulate extends Menu {
 			cur = cur.getParentState();
 		}
 		recreateStateMenus();
+	}
+
+	void dispose() {
+		setCurrentState(null, null);
 	}
 	
 	private void clearItems(ArrayList<CircuitStateMenuItem> items) {

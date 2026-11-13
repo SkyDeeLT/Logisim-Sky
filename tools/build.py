@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import zipfile
 from pathlib import Path
 
@@ -17,7 +16,7 @@ BUILD = ROOT / "build"
 CLASSES = BUILD / "classes"
 STAGE = BUILD / "stage"
 DIST = ROOT / "dist"
-OUT_JAR = DIST / "Logisim-Sky-1.0.jar"
+OUT_JAR = DIST / "Logisim-Sky-1.0.1.jar"
 MANIFEST = ROOT / "packaging" / "MANIFEST.MF"
 
 
@@ -94,16 +93,19 @@ def main() -> None:
     except Exception:
         pass
 
-    cp = os.pathsep.join([str(BASE_JAR), str(FLATLAF_JAR)])
-    cmd = [javac, "-encoding", "UTF-8", "-cp", cp, "-d", str(CLASSES)]
+    cp = os.pathsep.join(jar.relative_to(ROOT).as_posix() for jar in (BASE_JAR, FLATLAF_JAR))
+    args = ["-encoding", "UTF-8", "-cp", cp, "-d", CLASSES.relative_to(ROOT).as_posix()]
     if major >= 9:
-        cmd += ["--release", "8"]
+        args += ["--release", "8"]
     else:
-        cmd += ["-source", "8", "-target", "8"]
-    cmd += java_files
+        args += ["-source", "8", "-target", "8"]
+    args += [Path(path).relative_to(ROOT).as_posix() for path in java_files]
 
     print("Compiling source...")
-    subprocess.run(cmd, check=True)
+    # The Windows process command line cannot hold all the Java source paths.
+    argfile = BUILD / "javac.args"
+    argfile.write_text("".join(f'"{arg}"\n' for arg in args), encoding="utf-8")
+    subprocess.run([javac, "@" + argfile.relative_to(ROOT).as_posix()], cwd=ROOT, check=True)
 
     print("Preparing runtime archive...")
     safe_extract(BASE_JAR, STAGE, skip_meta=False)

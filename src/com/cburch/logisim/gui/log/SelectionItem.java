@@ -29,16 +29,34 @@ class SelectionItem implements AttributeListener, CircuitListener {
 		this.comp = comp;
 		this.option = option;
 		computeDescriptors();
-		
-		if (path != null) {
-			model.getCircuitState().getCircuit().addCircuitListener(this);
-			for (int i = 0; i < path.length; i++) {
-				path[i].getAttributeSet().addAttributeListener(this);
-				SubcircuitFactory circFact = (SubcircuitFactory) path[i].getFactory();
-				circFact.getSubcircuit().addCircuitListener(this);
-			}
+	}
+
+	boolean exists() {
+		Circuit circuit = model.getCircuitState().getCircuit();
+		for (Component component : path) {
+			if (!circuit.contains(component)) return false;
+			circuit = ((SubcircuitFactory) component.getFactory()).getSubcircuit();
+		}
+		return circuit.contains(comp);
+	}
+
+	void attach() {
+		computeDescriptors();
+		model.getCircuitState().getCircuit().addCircuitListener(this);
+		for (Component component : path) {
+			component.getAttributeSet().addAttributeListener(this);
+			((SubcircuitFactory) component.getFactory()).getSubcircuit().addCircuitListener(this);
 		}
 		comp.getAttributeSet().addAttributeListener(this);
+	}
+
+	void detach() {
+		model.getCircuitState().getCircuit().removeCircuitListener(this);
+		for (Component component : path) {
+			component.getAttributeSet().removeAttributeListener(this);
+			((SubcircuitFactory) component.getFactory()).getSubcircuit().removeCircuitListener(this);
+		}
+		comp.getAttributeSet().removeAttributeListener(this);
 	}
 	
 	private boolean computeDescriptors() {

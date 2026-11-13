@@ -20,6 +20,7 @@ public interface InstanceState {
 	public InstanceData getData();
 	public void setData(InstanceData value);
 	public void fireInvalidated();
+	default boolean isDetached() { return false; }
 	public boolean isCircuitRoot();
 	public long getTickCount();
 }

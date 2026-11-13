@@ -201,7 +201,7 @@ public class SubcircuitFactory extends InstanceFactory {
 	private CircuitState getSubstate(InstanceState instanceState) {
 		CircuitState subState = (CircuitState) instanceState.getData();
 		if (subState == null) {
-			subState = new CircuitState(instanceState.getProject(), source);
+			subState = new CircuitState(instanceState.getProject(), source, instanceState.isDetached());
 			instanceState.setData(subState);
 			instanceState.fireInvalidated();
 		}

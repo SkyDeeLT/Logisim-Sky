@@ -3,6 +3,8 @@
 
 package com.cburch.logisim.proj;
 
+import java.util.Set;
+
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.CircuitEvent;
 import com.cburch.logisim.circuit.CircuitListener;
@@ -68,7 +70,14 @@ public class Dependencies {
 				}
 				break;
 			case CircuitEvent.ACTION_CLEAR:
-				depends.removeNode(e.getCircuit());
+				@SuppressWarnings("unchecked")
+				Set<Component> cleared = (Set<Component>) e.getData();
+				for (Component old : cleared) {
+					if (old.getFactory() instanceof SubcircuitFactory) {
+						SubcircuitFactory factory = (SubcircuitFactory) old.getFactory();
+						depends.removeEdge(e.getCircuit(), factory.getSubcircuit());
+					}
+				}
 				break;
 			}
 		}

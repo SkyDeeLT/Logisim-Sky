@@ -10,9 +10,12 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -23,6 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -35,6 +39,12 @@ import com.cburch.logisim.circuit.Analyze;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.CircuitEvent;
 import com.cburch.logisim.circuit.CircuitListener;
+import com.cburch.logisim.circuit.SubcircuitFactory;
+import com.cburch.logisim.comp.Component;
+import com.cburch.logisim.data.AttributeEvent;
+import com.cburch.logisim.data.AttributeListener;
+import com.cburch.logisim.data.AttributeSet;
+import com.cburch.logisim.file.Options;
 import com.cburch.logisim.gui.menu.ProjectCircuitActions;
 import com.cburch.logisim.instance.Instance;
 import com.cburch.logisim.instance.StdAttr;
@@ -50,7 +60,7 @@ import com.cburch.logisim.util.LocaleManager;
  * Full analysis remains available through the classic analyzer button.
  */
 public class LiveAnalysisPanel extends JPanel
-        implements CircuitListener, ProjectListener, PropertyChangeListener {
+        implements CircuitListener, ProjectListener, PropertyChangeListener, AttributeListener {
     private static final int MAX_LIVE_INPUTS = 6;
 
     private final Project project;
@@ -66,6 +76,9 @@ public class LiveAnalysisPanel extends JPanel
     private final JTabbedPane tabs = new JTabbedPane();
     private final Timer debounce;
     private final Timer pulseTimer;
+    private final Set<Circuit> observedCircuits = new HashSet<>();
+    private AttributeSet observedOptions;
+    private boolean closed;
     private float pulse = 0f;
     private boolean pulseUp = true;
     private boolean refreshing = false;
@@ -170,16 +183,22 @@ public class LiveAnalysisPanel extends JPanel
 
         pulseTimer = new Timer(100, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (!AppPreferences.UI_ANIMATIONS.getBoolean() || !isShowing()) return;
                 pulse += pulseUp ? 0.075f : -0.075f;
                 if (pulse >= 1f) { pulse = 1f; pulseUp = false; }
                 if (pulse <= 0f) { pulse = 0f; pulseUp = true; }
                 updateStatusColor();
             }
         });
-        pulseTimer.start();
 
-        project.addCircuitListener(this);
+        addHierarchyListener(event -> {
+            if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                updatePulseTimer();
+                if (isShowing()) scheduleRefresh();
+                else debounce.stop();
+            }
+        });
+        updateCircuitListeners(project.getCurrentCircuit());
+        updateOptionsListener();
         project.addProjectListener(this);
         AppPreferences.UI_THEME.addPropertyChangeListener(this);
         AppPreferences.UI_ANIMATIONS.addPropertyChangeListener(this);
@@ -187,21 +206,39 @@ public class LiveAnalysisPanel extends JPanel
     }
 
     public void close() {
+        if (closed) return;
+        closed = true;
         debounce.stop();
         pulseTimer.stop();
-        project.removeCircuitListener(this);
+        updateCircuitListeners(null);
+        observedOptions.removeAttributeListener(this);
+        observedOptions = null;
         project.removeProjectListener(this);
         AppPreferences.UI_THEME.removePropertyChangeListener(this);
         AppPreferences.UI_ANIMATIONS.removePropertyChangeListener(this);
     }
 
     public void scheduleRefresh() {
-        if (!AppPreferences.LIVE_ANALYSIS.getBoolean()) return;
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::scheduleRefresh);
+            return;
+        }
+        if (!canRefresh()) return;
         debounce.restart();
     }
 
+    private boolean canRefresh() {
+        return !closed && AppPreferences.LIVE_ANALYSIS.getBoolean()
+                && (!isDisplayable() || isShowing());
+    }
+
+    private void updatePulseTimer() {
+        if (!closed && isShowing() && AppPreferences.UI_ANIMATIONS.getBoolean()) pulseTimer.start();
+        else pulseTimer.stop();
+    }
+
     private void refreshNow() {
-        if (refreshing || !AppPreferences.LIVE_ANALYSIS.getBoolean()) return;
+        if (refreshing || !canRefresh()) return;
         Circuit circuit = project.getCurrentCircuit();
         if (circuit == null) {
             showMessage(isRussian() ? "Нет активной схемы" : "No active circuit");
@@ -286,15 +323,72 @@ public class LiveAnalysisPanel extends JPanel
     }
 
     public void circuitChanged(CircuitEvent event) {
-        if (event.getCircuit() == project.getCurrentCircuit()) scheduleRefresh();
+        if (event.isSimulationChange()) return;
+        int action = event.getAction();
+        boolean subcircuitsChanged = action == CircuitEvent.ACTION_CLEAR
+                || ((action == CircuitEvent.ACTION_ADD || action == CircuitEvent.ACTION_REMOVE)
+                    && event.getData() instanceof Component
+                    && ((Component) event.getData()).getFactory() instanceof SubcircuitFactory);
+        if (subcircuitsChanged) updateCircuitListeners(project.getCurrentCircuit());
+        scheduleRefresh();
     }
 
     public void projectChanged(ProjectEvent event) {
         int a = event.getAction();
-        if (a == ProjectEvent.ACTION_SET_CURRENT || a == ProjectEvent.ACTION_SET_FILE || a == ProjectEvent.ACTION_SET_STATE) scheduleRefresh();
+        if (a == ProjectEvent.ACTION_SET_FILE) {
+            updateOptionsListener();
+            scheduleRefresh();
+        } else if (a == ProjectEvent.ACTION_SET_CURRENT) {
+            updateCircuitListeners(event.getCircuit());
+            scheduleRefresh();
+        }
+    }
+
+    private void updateCircuitListeners(Circuit circuit) {
+        Set<Circuit> reachable = new HashSet<>();
+        if (circuit != null) collectCircuits(circuit, reachable);
+        for (Circuit old : observedCircuits) {
+            if (!reachable.contains(old)) old.removeCircuitListener(this);
+        }
+        for (Circuit next : reachable) {
+            if (!observedCircuits.contains(next)) next.addCircuitListener(this);
+        }
+        observedCircuits.clear();
+        observedCircuits.addAll(reachable);
+    }
+
+    private static void collectCircuits(Circuit circuit, Set<Circuit> reachable) {
+        if (!reachable.add(circuit)) return;
+        for (Component component : circuit.getNonWires()) {
+            if (component.getFactory() instanceof SubcircuitFactory) {
+                collectCircuits(((SubcircuitFactory) component.getFactory()).getSubcircuit(), reachable);
+            }
+        }
+    }
+
+    private void updateOptionsListener() {
+        AttributeSet options = project.getOptions().getAttributeSet();
+        if (observedOptions == options) return;
+        if (observedOptions != null) observedOptions.removeAttributeListener(this);
+        observedOptions = options;
+        observedOptions.addAttributeListener(this);
+    }
+
+    @Override public void attributeListChanged(AttributeEvent event) { }
+
+    @Override public void attributeValueChanged(AttributeEvent event) {
+        if (event.getAttribute() == Options.sim_rand_attr || event.getAttribute() == Options.ATTR_GATE_UNDEFINED) {
+            scheduleRefresh();
+        }
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> propertyChange(evt));
+            return;
+        }
+        if (closed) return;
+        updatePulseTimer();
         setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, DarkTheme.BORDER_SOFT));
         updateStatusColor();
         repaint();

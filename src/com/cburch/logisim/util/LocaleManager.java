@@ -129,7 +129,7 @@ public class LocaleManager {
 	}
 
 	private static void fireLocaleChanged() {
-		for (LocaleListener l : listeners) {
+		for (LocaleListener l : listeners.toArray(new LocaleListener[0])) {
 			l.localeChanged();
 		}
 	}

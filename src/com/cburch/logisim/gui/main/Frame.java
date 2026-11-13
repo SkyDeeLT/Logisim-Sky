@@ -15,6 +15,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.IllegalComponentStateException;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
@@ -40,6 +41,7 @@ import javax.swing.event.ChangeListener;
 import com.cburch.draw.toolbar.Toolbar;
 import com.cburch.draw.toolbar.ToolbarModel;
 import com.cburch.logisim.DarkTheme;
+import com.cburch.logisim.Main;
 import com.cburch.logisim.circuit.Circuit;
 import com.cburch.logisim.circuit.CircuitEvent;
 import com.cburch.logisim.circuit.CircuitListener;
@@ -60,6 +62,7 @@ import com.cburch.logisim.gui.generic.CardPanel;
 import com.cburch.logisim.gui.generic.LFrame;
 import com.cburch.logisim.gui.generic.ZoomControl;
 import com.cburch.logisim.gui.generic.ZoomModel;
+import com.cburch.logisim.gui.hex.HexFrame;
 import com.cburch.logisim.gui.menu.LogisimMenuBar;
 import com.cburch.logisim.prefs.AppPreferences;
 import com.cburch.logisim.proj.Project;
@@ -176,14 +179,7 @@ public class Frame extends LFrame implements LocaleListener {
 	class MyWindowListener extends WindowAdapter {
 		@Override
 		public void windowClosing(WindowEvent e) {
-			if (confirmClose(Strings.get("confirmCloseTitle"))) {
-				layoutCanvas.closeCanvas();
-				if (inspectorDock != null) inspectorDock.close();
-				if (logicAnalyzer != null) logicAnalyzer.close();
-				if (circuitTabs != null) circuitTabs.close();
-				if (recoveryManager != null) recoveryManager.closeCleanly();
-				Frame.this.dispose();
-			}
+			if (!disposed && confirmClose()) dispose();
 		}
 
 		@Override
@@ -193,6 +189,7 @@ public class Frame extends LFrame implements LocaleListener {
 	}
 
 	private Project         proj;
+	private boolean disposed;
 	private MyProjectListener myProjectListener = new MyProjectListener();
 
 	// GUI elements shared between views
@@ -335,7 +332,9 @@ public class Frame extends LFrame implements LocaleListener {
 
 		proj.setFrame(this);
 		recoveryManager = new RecoveryManager(proj);
-		SwingUtilities.invokeLater(new Runnable() { public void run() { RecoveryManager.offerPending(Frame.this, Frame.this.proj); } });
+		SwingUtilities.invokeLater(() -> {
+			if (!disposed) RecoveryManager.offerPending(this, proj);
+		});
 		if (proj.getTool() == null) {
 			proj.setTool(proj.getOptions().getToolbarData().getFirstTool());
 		}
@@ -570,7 +569,7 @@ public class Frame extends LFrame implements LocaleListener {
 		} else {
 			s = StringUtil.format(Strings.get("titleFileKnown"), name);
 		}
-		this.setTitle(s + " — Logisim Sky 1.0");
+		this.setTitle(s + " — Logisim Sky " + Main.SKY_UI_VERSION);
 		myProjectListener.enableSave();
 	}
 	
@@ -660,19 +659,46 @@ public class Frame extends LFrame implements LocaleListener {
 		int result = JOptionPane.showOptionDialog(this,
 				message, title, 0, JOptionPane.QUESTION_MESSAGE, null,
 				options, options[0]);
-		boolean ret;
 		if (result == 0) {
-			ret = ProjectActions.doSave(proj);
-		} else if (result == 1) {
-			ret = true;
-		} else {
-			ret = false;
+			return ProjectActions.doSave(proj);
 		}
-		if (ret) {
-			if (recoveryManager != null) recoveryManager.closeCleanly();
-			dispose();
+		return result == 1;
+	}
+
+	@Override
+	public void dispose() {
+		if (disposed) return;
+		disposed = true;
+		if (isShowing() && Projects.getOpenProjects().size() == 1
+				&& Projects.getOpenProjects().contains(proj)) {
+			savePreferences();
 		}
-		return ret;
+		LocaleManager.removeLocaleListener(this);
+		proj.removeProjectListener(myProjectListener);
+		proj.removeLibraryListener(myProjectListener);
+		proj.removeCircuitListener(myProjectListener);
+		AppPreferences.TOOLBAR_PLACEMENT.removePropertyChangeListener(myProjectListener);
+		AppPreferences.LIVE_ANALYSIS.removePropertyChangeListener(myProjectListener);
+		layoutCanvas.closeCanvas();
+		inspectorDock.close();
+		logicAnalyzer.close();
+		circuitTabs.close();
+		toolbox.close();
+		simExplorer.close();
+		attrTable.setAttrTableModel(null);
+		recoveryManager.closeCleanly();
+		Window options = proj.getOptionsFrame(false);
+		if (options != null) options.dispose();
+		Window log = proj.getLogFrame(false);
+		if (log != null) log.dispose();
+		for (Window window : Window.getWindows()) {
+			if (window instanceof HexFrame && ((HexFrame) window).getProject() == proj) {
+				window.dispose();
+			}
+		}
+		menubar.dispose();
+		if (!isDisplayable()) proj.getSimulator().shutDown();
+		super.dispose();
 	}
 	
 	private static Point getInitialLocation() {

@@ -4,6 +4,8 @@
 package com.cburch.logisim.file;
 
 import com.cburch.logisim.data.Attribute;
+import com.cburch.logisim.data.AttributeEvent;
+import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.AttributeOption;
 import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.data.AttributeSets;
@@ -35,15 +37,31 @@ public class Options {
 	private AttributeSet attrs;
 	private MouseMappings mmappings;
 	private ToolbarData toolbar;
+	private volatile int simulationRandomShift;
 
 	public Options() {
 		attrs = AttributeSets.fixedSet(ATTRIBUTES, DEFAULTS);
+		attrs.addAttributeListener(new AttributeListener() {
+			public void attributeListChanged(AttributeEvent event) { }
+
+			public void attributeValueChanged(AttributeEvent event) {
+				if (event.getAttribute() == sim_rand_attr) {
+					int randomness = (Integer) event.getValue();
+					int shift = 32 - Integer.numberOfLeadingZeros(Math.max(1, randomness) - 1);
+					simulationRandomShift = Math.min(30, shift);
+				}
+			}
+		});
 		mmappings = new MouseMappings();
 		toolbar = new ToolbarData();
 	}
 
 	public AttributeSet getAttributeSet() {
 		return attrs;
+	}
+
+	public int getSimulationRandomShift() {
+		return simulationRandomShift;
 	}
 
 	public MouseMappings getMouseMappings() {

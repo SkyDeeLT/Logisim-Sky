@@ -116,10 +116,12 @@ public class CircuitState implements InstanceData {
 		}
 	}
 
-	private MyCircuitListener myCircuitListener = new MyCircuitListener();
+	private final MyCircuitListener myCircuitListener;
+	private final boolean detached;
 	private Propagator base = null; // base of tree of CircuitStates
 	private Project proj; // project where circuit lies
 	private Circuit circuit; // circuit being simulated
+	private Object logData;
 
 	private CircuitState parentState = null; // parent in tree of CircuitStates
 	private Component parentComp = null; // subcircuit component containing this state
@@ -136,13 +138,38 @@ public class CircuitState implements InstanceData {
 	private int id = lastId++;
 
 	public CircuitState(Project proj, Circuit circuit) {
+		this(proj, circuit, false);
+	}
+
+	CircuitState(Project proj, Circuit circuit, boolean detached) {
 		this.proj = proj;
 		this.circuit = circuit;
-		circuit.addCircuitListener(myCircuitListener);
+		this.detached = detached;
+		myCircuitListener = detached ? null : new MyCircuitListener();
+		if (myCircuitListener != null) circuit.addCircuitListener(myCircuitListener);
+	}
+
+	public boolean isDetached() {
+		return detached;
+	}
+
+	static CircuitState forAnalysis(Project project, Circuit circuit, int randomShift) {
+		CircuitState state = new CircuitState(project, circuit, true);
+		state.base = new Propagator(state, randomShift);
+		state.markAllComponentsDirty();
+		return state;
 	}
 	
 	public Project getProject() {
 		return proj;
+	}
+
+	public Object getLogData() {
+		return logData;
+	}
+
+	public void setLogData(Object logData) {
+		this.logData = logData;
 	}
 	
 	Component getSubcircuit() {
@@ -155,7 +182,7 @@ public class CircuitState implements InstanceData {
 	}
 	
 	public CircuitState cloneState() {
-		CircuitState ret = new CircuitState(proj, circuit);
+		CircuitState ret = new CircuitState(proj, circuit, detached);
 		ret.copyFrom(this, new Propagator(ret));
 		ret.parentComp = null;
 		ret.parentState = null;
@@ -169,7 +196,7 @@ public class CircuitState implements InstanceData {
 		HashMap<CircuitState,CircuitState> substateData = new HashMap<CircuitState,CircuitState>();
 		this.substates = new ArraySet<CircuitState>();
 		for (CircuitState oldSub : src.substates) {
-			CircuitState newSub = new CircuitState(src.proj, oldSub.circuit);
+			CircuitState newSub = new CircuitState(src.proj, oldSub.circuit, detached);
 			newSub.copyFrom(oldSub, base);
 			newSub.parentState = this;
 			this.substates.add(newSub);
@@ -218,6 +245,10 @@ public class CircuitState implements InstanceData {
 	
 	public CircuitState getParentState() {
 		return parentState;
+	}
+
+	public CircuitState getSimulationRoot() {
+		return base == null ? this : base.getRootState();
 	}
 	
 	public Set<CircuitState> getSubstates() { // returns Set of CircuitStates

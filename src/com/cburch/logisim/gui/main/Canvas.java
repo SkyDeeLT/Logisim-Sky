@@ -12,6 +12,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -260,6 +261,7 @@ public class Canvas extends JPanel
 				paintThread.requestRepaint();
 				repaint();
 			} else if (AppPreferences.UI_ANIMATIONS.isSource(event)) {
+				SwingUtilities.invokeLater(Canvas.this::updateAmbienceTimer);
 				paintThread.requestRepaint();
 				repaint();
 			} else if (AppPreferences.GATE_SHAPE.isSource(event)
@@ -582,7 +584,8 @@ public class Canvas extends JPanel
 
 	private CanvasPaintThread paintThread;
 	private CanvasPainter painter;
-	private Timer ambienceTimer;
+	private final Timer ambienceTimer;
+	private boolean closed;
 	private boolean paintDirty = false; // only for within paintComponent
 	private boolean inPaint = false; // only for within paintComponent
 	private Object repaintLock = new Object(); // for waitForRepaintDone
@@ -599,12 +602,13 @@ public class Canvas extends JPanel
 		// A low-frequency repaint is enough for the ambient gradient drift.
 		// It is intentionally lightweight and never touches simulator state.
 		this.ambienceTimer = new Timer(125, e -> {
-			if (AppPreferences.UI_ANIMATIONS.getBoolean() && DarkTheme.isGradientCanvas() && isShowing()) {
-				Rectangle visible = getVisibleRect();
-				if (visible.width > 0 && visible.height > 0) repaint(visible.x, visible.y, visible.width, visible.height);
-			}
+			Rectangle visible = getVisibleRect();
+			if (!visible.isEmpty()) repaint(visible.x, visible.y, visible.width, visible.height);
 		});
 		this.ambienceTimer.setCoalesce(true);
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) updateAmbienceTimer();
+		});
 
 		setBackground(DarkTheme.CANVAS_BACKGROUND);
 		addMouseListener(myListener);
@@ -627,12 +631,42 @@ public class Canvas extends JPanel
 		AppPreferences.UI_ANIMATIONS.addPropertyChangeListener(myListener);
 		loadOptions(options);
 		paintThread.start();
-		ambienceTimer.start();
+	}
+
+	@Override
+	public void updateUI() {
+		super.updateUI();
+		updateAmbienceTimer();
+	}
+
+	private void updateAmbienceTimer() {
+		if (ambienceTimer == null) return;
+		if (!closed && isShowing() && DarkTheme.isGradientCanvas() && !DarkTheme.isLightTheme()
+				&& AppPreferences.UI_ANIMATIONS.getBoolean()) {
+			ambienceTimer.start();
+		} else {
+			ambienceTimer.stop();
+		}
 	}
 	
 	public void closeCanvas() {
-		if (ambienceTimer != null) ambienceTimer.stop();
+		closed = true;
+		ambienceTimer.stop();
 		paintThread.requestStop();
+		LocaleManager.removeLocaleListener(this);
+		setToolTipText(null);
+		proj.removeProjectListener(myProjectListener);
+		proj.removeLibraryListener(myProjectListener);
+		proj.removeCircuitListener(myProjectListener);
+		proj.getOptions().getAttributeSet().removeAttributeListener(myProjectListener);
+		proj.getSimulator().removeSimulatorListener(myProjectListener);
+		proj.getSimulator().removeSimulatorListener(tickCounter);
+		selection.removeListener(myProjectListener);
+		AppPreferences.COMPONENT_TIPS.removePropertyChangeListener(myListener);
+		AppPreferences.GATE_SHAPE.removePropertyChangeListener(myListener);
+		AppPreferences.SHOW_TICK_RATE.removePropertyChangeListener(myListener);
+		AppPreferences.UI_THEME.removePropertyChangeListener(myListener);
+		AppPreferences.UI_ANIMATIONS.removePropertyChangeListener(myListener);
 	}
 	
 	private void loadOptions(AttributeSet options) {

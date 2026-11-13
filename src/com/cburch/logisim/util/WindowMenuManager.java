@@ -4,7 +4,6 @@
 package com.cburch.logisim.util;
 
 import java.util.ArrayList;
-import java.util.List;
 
 class WindowMenuManager {
 	private WindowMenuManager() { }
@@ -21,7 +20,12 @@ class WindowMenuManager {
 		menus.add(menu);
 	}
 	
-	// TODO frames should call removeMenu when they're destroyed
+	public static void removeMenu(WindowMenu menu) {
+		if (!menus.remove(menu)) return;
+		for (WindowMenuItemManager manager : managers) {
+			manager.removeMenuItem(menu);
+		}
+	}
 	
 	public static void addManager(WindowMenuItemManager manager) {
 		for (WindowMenu menu : menus) {
@@ -31,14 +35,11 @@ class WindowMenuManager {
 	}
 	
 	public static void removeManager(WindowMenuItemManager manager) {
+		unsetCurrentManager(manager);
 		for (WindowMenu menu : menus) {
 			manager.removeMenuItem(menu);
 		}
 		managers.remove(manager);
-	}
-	
-	static List<WindowMenu> getMenus() {
-		return menus;
 	}
 	
 	static WindowMenuItemManager getCurrentManager() {

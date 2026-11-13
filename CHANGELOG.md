@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.1
+
+### Fixed
+
+- Released closed projects, removed subcircuits, and obsolete simulation states while preserving undo history.
+- Stopped Live Analysis feedback from probes and removed listener buildup during truth-table calculations and RAM resets.
+- Fixed repeated idle repainting in the properties panel and a busy loop after a manual tick in paused simulation.
+- Reduced grid rendering work and logic analyzer allocations while preserving their output.
+
+Classic Logisim 2.7.1 `.circ` compatibility is preserved.
+
 ## v1.0.0
 
 First public Logisim Sky release.

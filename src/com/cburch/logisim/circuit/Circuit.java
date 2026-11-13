@@ -4,6 +4,7 @@
 package com.cburch.logisim.circuit;
 
 import java.awt.Graphics;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,7 +98,8 @@ public class Circuit {
 		}
 		
 		public void componentInvalidated(ComponentEvent e) {
-			fireEvent(CircuitEvent.ACTION_INVALIDATE, e.getSource());
+			fireEvent(new CircuitEvent(CircuitEvent.ACTION_INVALIDATE, Circuit.this,
+					e.getSource(), e.isSimulationChange()));
 		}
 	}
 
@@ -112,14 +114,14 @@ public class Circuit {
 		// wires is package-protected for CircuitState and Analyze only.
 	private ArrayList<Component> clocks = new ArrayList<Component>();
 	private CircuitLocker locker;
-	private WeakHashMap<Component, Circuit> circuitsUsingThis;
+	private final WeakHashMap<Component, WeakReference<Circuit>> circuitsUsingThis;
 
 	public Circuit(String name) {
 		appearance = new CircuitAppearance(this);
 		staticAttrs = CircuitAttributes.createBaseAttrs(this, name);
 		subcircuitFactory = new SubcircuitFactory(this);
 		locker = new CircuitLocker();
-		circuitsUsingThis = new WeakHashMap<Component, Circuit>();
+		circuitsUsingThis = new WeakHashMap<Component, WeakReference<Circuit>>();
 	}
 	
 	CircuitLocker getLocker() {
@@ -127,7 +129,14 @@ public class Circuit {
 	}
 	
 	public Collection<Circuit> getCircuitsUsingThis() {
-		return circuitsUsingThis.values();
+		ArrayList<Circuit> circuits = new ArrayList<Circuit>();
+		Iterator<WeakReference<Circuit>> references = circuitsUsingThis.values().iterator();
+		while (references.hasNext()) {
+			Circuit circuit = references.next().get();
+			if (circuit == null) references.remove();
+			else circuits.add(circuit);
+		}
+		return circuits;
 	}
 	
 	public void mutatorClear() {
@@ -375,7 +384,7 @@ public class Circuit {
 				clocks.add(c);
 			} else if (factory instanceof SubcircuitFactory) {
 				SubcircuitFactory subcirc = (SubcircuitFactory) factory;
-				subcirc.getSubcircuit().circuitsUsingThis.put(c, this);
+				subcirc.getSubcircuit().circuitsUsingThis.put(c, new WeakReference<Circuit>(this));
 			}
 			c.addComponentListener(myComponentListener);
 		}

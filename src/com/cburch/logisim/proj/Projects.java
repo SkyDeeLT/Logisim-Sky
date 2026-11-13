@@ -30,6 +30,7 @@ public class Projects {
 			MyListener listener) {
 		frame.removeWindowListener(listener);
 		openProjects.remove(proj);
+		if (mostRecentFrame == frame) mostRecentFrame = null;
 		proj.getSimulator().shutDown();
 		propertySupport.firePropertyChange(projectListProperty, null, null);
 	}
@@ -86,18 +87,15 @@ public class Projects {
 	
 	public static Frame getTopFrame() {
 		Frame ret = mostRecentFrame;
-		if (ret == null) {
-			Frame backup = null;
-			for (Project proj : openProjects) {
-				Frame frame = proj.getFrame();
-				if (ret == null) ret = frame;
-				if (ret.isVisible() && (ret.getExtendedState() & Frame.ICONIFIED) != 0) {
-					backup = ret;
-				}
-			}
-			if (ret == null) ret = backup;
+		if (ret != null && ret.isDisplayable()) return ret;
+		Frame backup = null;
+		for (Project proj : openProjects) {
+			Frame frame = proj.getFrame();
+			if (frame == null || !frame.isDisplayable()) continue;
+			if (frame.isVisible() && (frame.getExtendedState() & Frame.ICONIFIED) == 0) return frame;
+			if (backup == null) backup = frame;
 		}
-		return ret;
+		return backup;
 	}
 	
 	static void windowCreated(Project proj, Frame oldFrame, Frame frame) {

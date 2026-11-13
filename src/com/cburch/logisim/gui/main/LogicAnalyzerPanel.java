@@ -10,8 +10,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -34,7 +35,7 @@ public final class LogicAnalyzerPanel extends JPanel {
     private static final class Trace {
         final Location location;
         final String name;
-        final LinkedList<Value> values = new LinkedList<Value>();
+        final ArrayDeque<Value> values = new ArrayDeque<Value>(MAX_SAMPLES);
 
         Trace(Wire wire, int index) {
             this.location = wire.getEndLocation(0);
@@ -66,7 +67,7 @@ public final class LogicAnalyzerPanel extends JPanel {
         clear.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent e) { clearSamples(); } });
         JButton remove = new JButton("Удалить все");
         remove.setFocusable(false);
-        remove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent e) { traces.clear(); waveView.repaint(); updateTitle(); } });
+        remove.addActionListener(e -> removeTraces());
         toggle.setFocusable(false);
         toggle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent e) { setExpanded(!expanded); } });
         buttons.add(clear);
@@ -81,7 +82,6 @@ public final class LogicAnalyzerPanel extends JPanel {
         add(head, BorderLayout.NORTH);
         add(body, BorderLayout.CENTER);
         sampleTimer = new Timer(100, new ActionListener() { public void actionPerformed(ActionEvent e) { sample(); } });
-        sampleTimer.start();
         setExpanded(false);
         updateTitle();
     }
@@ -93,6 +93,7 @@ public final class LogicAnalyzerPanel extends JPanel {
         Location loc = wire.getEndLocation(0);
         for (Trace trace : traces) if (trace.location.equals(loc)) { setExpanded(true); return; }
         traces.add(new Trace(wire, traces.size() + 1));
+        sampleTimer.start();
         setExpanded(true);
         updateTitle();
         waveView.revalidate();
@@ -121,13 +122,20 @@ public final class LogicAnalyzerPanel extends JPanel {
         waveView.repaint();
     }
 
+    private void removeTraces() {
+        traces.clear();
+        sampleTimer.stop();
+        waveView.repaint();
+        updateTitle();
+    }
+
     private void sample() {
         if (traces.isEmpty()) return;
         CircuitState state = project.getCircuitState();
         if (state == null) return;
         for (Trace trace : traces) {
+            if (trace.values.size() == MAX_SAMPLES) trace.values.removeFirst();
             trace.values.add(state.getValue(trace.location));
-            while (trace.values.size() > MAX_SAMPLES) trace.values.removeFirst();
         }
         if (expanded) waveView.repaint();
     }
@@ -170,19 +178,18 @@ public final class LogicAnalyzerPanel extends JPanel {
                 g2.drawString(trace.name, DarkTheme.scale(8), cy + fm.getAscent() / 2 - 2);
                 g2.setColor(DarkTheme.BORDER_SOFT);
                 g2.drawLine(left, cy + rowH / 2 - 2, getWidth(), cy + rowH / 2 - 2);
-                int count = trace.values.size();
-                if (count == 0) continue;
+                if (trace.values.isEmpty()) continue;
                 double step = Math.max(2.0, width / (double) Math.max(1, MAX_SAMPLES - 1));
-                int start = Math.max(0, count - MAX_SAMPLES);
-                Value first = trace.values.get(start);
+                Iterator<Value> samples = trace.values.iterator();
+                Value first = samples.next();
                 if (first.getWidth() == 1) {
                     g2.setStroke(new BasicStroke(Math.max(1f, DarkTheme.scale(1.5f))));
                     g2.setColor(DarkTheme.ACCENT);
                     int px = left;
                     int py = logicY(first, cy, rowH);
-                    for (int i = start + 1; i < count; i++) {
-                        Value v = trace.values.get(i);
-                        int nx = left + (int) Math.round((i - start) * step);
+                    for (int i = 1; samples.hasNext(); i++) {
+                        Value v = samples.next();
+                        int nx = left + (int) Math.round(i * step);
                         int ny = logicY(v, cy, rowH);
                         if (ny != py) {
                             g2.drawLine(px, py, nx, py);
@@ -196,7 +203,7 @@ public final class LogicAnalyzerPanel extends JPanel {
                 } else {
                     g2.setColor(DarkTheme.ACCENT);
                     g2.drawRoundRect(left, cy - DarkTheme.scale(10), width - 2, DarkTheme.scale(20), DarkTheme.scale(8), DarkTheme.scale(8));
-                    Value last = trace.values.get(count - 1);
+                    Value last = trace.values.getLast();
                     String text = "0x" + last.toHexString() + "  [" + last.getWidth() + " bit]";
                     g2.drawString(text, left + DarkTheme.scale(8), cy + fm.getAscent() / 2 - 2);
                 }

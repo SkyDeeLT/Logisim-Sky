@@ -7,8 +7,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import javax.swing.JFrame;
-
 import com.cburch.logisim.circuit.CircuitState;
 import com.cburch.logisim.data.Value;
 import com.cburch.logisim.util.EventSourceWeakSupport;
@@ -20,7 +18,7 @@ class Model {
 	private boolean fileEnabled = false;
 	private File file = null;
 	private boolean fileHeader = true;
-	private boolean selected = false;
+	private volatile boolean selected;
 	private LogThread logger = null;
 	
 	public Model(CircuitState circuitState) {
@@ -105,16 +103,18 @@ class Model {
 		}
 	}
 	
-	public void setSelected(JFrame frame, boolean value) {
+	public void setSelected(boolean value) {
 		if (selected == value) return;
 		selected = value;
 		if (selected) {
+			selection.attach();
 			logger = new LogThread(this);
 			logger.start();
 		} else {
 			if (logger != null) logger.cancel();
 			logger = null;
 			fileEnabled = false;
+			selection.detach();
 		}
 		fireFilePropertyChanged(new ModelEvent());
 	}

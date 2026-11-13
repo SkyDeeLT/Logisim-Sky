@@ -3,7 +3,7 @@
 
 package com.cburch.logisim.circuit;
 
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.cburch.logisim.comp.ComponentDrawContext;
 import com.cburch.logisim.prefs.AppPreferences;
@@ -30,17 +30,14 @@ public class Simulator {
 	//end DEBUGGING*/
 	
 	class PropagationManager extends Thread {
-		private Propagator propagator = null;
+		private volatile Propagator propagator = null;
 		private PropagationPoints stepPoints = new PropagationPoints();
-		private volatile int ticksRequested = 0;
-		private volatile int stepsRequested = 0;
-		private volatile boolean resetRequested = false;
-		private volatile boolean propagateRequested = false;
-		private volatile boolean complete = false;
-
-		// These variables apply only if PRINT_TICK_RATE is set
-		int tickRateTicks = 0;
-		long tickRateStart = System.currentTimeMillis();
+		private int ticksRequested = 0;
+		private int automaticTicksRequested = 0;
+		private int stepsRequested = 0;
+		private boolean resetRequested = false;
+		private boolean propagateRequested = false;
+		private boolean complete = false;
 
 		public Propagator getPropagator() {
 			return propagator;
@@ -64,11 +61,21 @@ public class Simulator {
 			}
 		}
 		
-		public synchronized void requestTick()  {
-			if (ticksRequested < 16) {
-				ticksRequested++;
-			}
+		public synchronized void requestTick() {
+			if (complete) return;
+			ticksRequested++;
 			notifyAll();
+		}
+
+		public synchronized void requestAutomaticTicks(int count) {
+			if (isRunning && isTicking && !complete) {
+				automaticTicksRequested = Math.min(16, automaticTicksRequested + count);
+				notifyAll();
+			}
+		}
+
+		public synchronized void cancelAutomaticTicks() {
+			automaticTicksRequested = 0;
 		}
 		
 		public synchronized void shutDown() {
@@ -78,95 +85,93 @@ public class Simulator {
 		
 		@Override
 		public void run() {
-			while (!complete) {
-				synchronized(this) {
+			while (true) {
+				boolean reset;
+				boolean tick;
+				boolean step;
+				boolean propagate;
+				boolean running;
+				Propagator current;
+				synchronized (this) {
 					while (!complete && !propagateRequested
-							&& !resetRequested && ticksRequested == 0
+							&& !resetRequested && ticksRequested == 0 && automaticTicksRequested == 0
 							&& stepsRequested == 0) {
 						try {
 							wait();
 						} catch (InterruptedException e) { }
 					}
+					if (complete) return;
+
+					current = propagator;
+					running = isRunning;
+					reset = resetRequested;
+					tick = ticksRequested > 0 || (running && isTicking && automaticTicksRequested > 0);
+					step = !running && stepsRequested > 0;
+					propagate = propagateRequested;
+					resetRequested = false;
+					propagateRequested = false;
+					if (ticksRequested > 0) ticksRequested--;
+					else if (tick) automaticTicksRequested--;
+					else automaticTicksRequested = 0;
+					if (running) stepsRequested = 0;
+					else if (step) stepsRequested--;
 				}
 
-				if (resetRequested) {
-					resetRequested = false;
-					if (propagator != null) propagator.reset();
+				if (reset) {
+					if (current != null) current.reset();
 					firePropagationCompleted();
-					propagateRequested |= isRunning;
 				}
-				
-				if (propagateRequested || ticksRequested > 0 || stepsRequested > 0) {
-					boolean ticked = false;
-					propagateRequested = false;
-					if (isRunning) {
-						stepPoints.clear();
-						stepsRequested = 0;
-						if (propagator == null) {
-							ticksRequested = 0;
-						} else {
-							ticked = ticksRequested > 0;
-							if (ticked) doTick();
+				if (!tick && !step && !propagate && !(reset && running)) continue;
+
+				if (current != null) {
+					try {
+						exceptionEncountered = false;
+						if (tick) current.tick();
+						if (running) {
+							stepPoints.clear();
 							do {
-								propagateRequested = false;
-								try {
-									exceptionEncountered = false;
-									propagator.propagate();
-								} catch (Throwable thr) {
-									thr.printStackTrace();
-									exceptionEncountered = true;
-									setIsRunning(false);
-								}
-							} while (propagateRequested);
-							if (isOscillating()) {
+								current.propagate();
+							} while (consumePropagationRequest(current));
+							if (propagator == current && current.isOscillating()) {
 								setIsRunning(false);
-								ticksRequested = 0;
-								propagateRequested = false;
+								synchronized (this) {
+									ticksRequested = 0;
+									propagateRequested = false;
+								}
 							}
+						} else if (step) {
+							stepPoints.clear();
+							current.step(stepPoints);
 						}
-					} else {
-						if (stepsRequested > 0) {
-							if (ticksRequested > 0) {
-								ticksRequested = 1;
-								doTick();
-							}
-							
-							synchronized(this) {
-								stepsRequested--;
-							}
-							exceptionEncountered = false;
-							try {
-								stepPoints.clear();
-								propagator.step(stepPoints);
-							} catch (Throwable thr) {
-								thr.printStackTrace();
-								exceptionEncountered = true;
-							}
-						}
+					} catch (Throwable thr) {
+						thr.printStackTrace();
+						exceptionEncountered = true;
+						if (running) setIsRunning(false);
 					}
-					if (ticked) fireTickCompleted();
-					firePropagationCompleted();
+					if (tick) fireTickCompleted();
 				}
+				firePropagationCompleted();
 			}
 		}
-		
-		private void doTick() {
-			synchronized(this) {
-				ticksRequested--;
-			}
-			propagator.tick();
+
+		private synchronized boolean consumePropagationRequest(Propagator current) {
+			if (complete || !isRunning || propagator != current
+					|| current.isOscillating() || !propagateRequested) return false;
+			propagateRequested = false;
+			return true;
 		}
 	}
 
-	private boolean isRunning = true;
-	private boolean isTicking = false;
-	private boolean exceptionEncountered = false;
+	private volatile boolean isRunning = true;
+	private volatile boolean isTicking = false;
+	private volatile boolean exceptionEncountered = false;
 	private double tickFrequency = 1.0;
 
 	private PropagationManager manager;
 	private SimulatorTicker ticker;
-	private ArrayList<SimulatorListener> listeners
-		= new ArrayList<SimulatorListener>();
+	private final CopyOnWriteArrayList<SimulatorListener> listeners
+		= new CopyOnWriteArrayList<SimulatorListener>();
+	private final SimulatorEvent event = new SimulatorEvent(this);
 
 	public Simulator() {
 		manager = new PropagationManager();
@@ -203,7 +208,7 @@ public class Simulator {
 	}
 	
 	public void tick() {
-		ticker.tickOnce();
+		manager.requestTick();
 	}
 	
 	public void step() {
@@ -229,6 +234,7 @@ public class Simulator {
 		if (isRunning != value) {
 			isRunning = value;
 			renewTickerAwake();
+			if (value) manager.requestPropagate();
 			/*DEBUGGING - comment out: 
 			if (!value) flushLog(); //*/
 			fireSimulatorStateChanged();
@@ -248,7 +254,9 @@ public class Simulator {
 	}
 	
 	private void renewTickerAwake() {
-		ticker.setAwake(isRunning && isTicking && tickFrequency > 0);
+		boolean awake = isRunning && isTicking && tickFrequency > 0;
+		ticker.setAwake(awake);
+		if (!awake) manager.cancelAutomaticTicks();
 	}
 
 	public double getTickFrequency() {
@@ -285,21 +293,18 @@ public class Simulator {
 	public void addSimulatorListener(SimulatorListener l) { listeners.add(l); }
 	public void removeSimulatorListener(SimulatorListener l) { listeners.remove(l); }
 	void firePropagationCompleted() {
-		SimulatorEvent e = new SimulatorEvent(this);
-		for (SimulatorListener l : new ArrayList<SimulatorListener>(listeners)) {
-			l.propagationCompleted(e);
+		for (SimulatorListener l : listeners) {
+			l.propagationCompleted(event);
 		}
 	}
 	void fireTickCompleted() {
-		SimulatorEvent e = new SimulatorEvent(this);
-		for (SimulatorListener l : new ArrayList<SimulatorListener>(listeners)) {
-			l.tickCompleted(e);
+		for (SimulatorListener l : listeners) {
+			l.tickCompleted(event);
 		}
 	}
 	void fireSimulatorStateChanged() {
-		SimulatorEvent e = new SimulatorEvent(this);
-		for (SimulatorListener l : new ArrayList<SimulatorListener>(listeners)) {
-			l.simulatorStateChanged(e);
+		for (SimulatorListener l : listeners) {
+			l.simulatorStateChanged(event);
 		}
 	}
 }

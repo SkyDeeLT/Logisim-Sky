@@ -320,9 +320,10 @@ public class Analyze {
 		int inputCount = inputPins.size();
 		int rowCount = 1 << inputCount;
 		Entry[][] columns = new Entry[outputPins.size()][rowCount];
+		int randomShift = proj.getOptions().getSimulationRandomShift();
 		
 		for (int i = 0; i < rowCount; i++) {
-			CircuitState circuitState = new CircuitState(proj, circuit);
+			CircuitState circuitState = CircuitState.forAnalysis(proj, circuit, randomShift);
 			for (int j = 0; j < inputCount; j++) {
 				Instance pin = inputPins.get(j);
 				InstanceState pinState = circuitState.getInstanceState(pin);

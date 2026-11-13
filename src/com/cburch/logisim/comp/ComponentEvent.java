@@ -7,15 +7,29 @@ public class ComponentEvent {
 	private Component source;
 	private Object oldData;
 	private Object newData;
+	private final boolean simulationChange;
 
 	public ComponentEvent(Component source) {
-		this(source, null, null);
+		this(source, false);
+	}
+
+	public ComponentEvent(Component source, boolean simulationChange) {
+		this(source, null, null, simulationChange);
 	}
 	
 	public ComponentEvent(Component source, Object oldData, Object newData) {
+		this(source, oldData, newData, false);
+	}
+
+	private ComponentEvent(Component source, Object oldData, Object newData, boolean simulationChange) {
 		this.source = source;
 		this.oldData = oldData;
 		this.newData = newData;
+		this.simulationChange = simulationChange;
+	}
+
+	public boolean isSimulationChange() {
+		return simulationChange;
 	}
 
 	public Component getSource() {

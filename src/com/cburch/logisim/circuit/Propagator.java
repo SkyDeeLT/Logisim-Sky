@@ -3,7 +3,6 @@
 
 package com.cburch.logisim.circuit;
 
-import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
@@ -12,8 +11,6 @@ import java.util.Random;
 import com.cburch.logisim.comp.Component;
 import com.cburch.logisim.comp.ComponentDrawContext;
 import com.cburch.logisim.comp.EndData;
-import com.cburch.logisim.data.AttributeEvent;
-import com.cburch.logisim.data.AttributeListener;
 import com.cburch.logisim.data.Location;
 import com.cburch.logisim.data.Value;
 import com.cburch.logisim.file.Options;
@@ -84,38 +81,14 @@ public class Propagator {
 		}
 	}
 	
-	private static class Listener implements AttributeListener {
-		WeakReference<Propagator> prop;
-		
-		public Listener(Propagator propagator) {
-			prop = new WeakReference<Propagator>(propagator);
-		}
-		
-		public void attributeListChanged(AttributeEvent e) { }
-
-		public void attributeValueChanged(AttributeEvent e) {
-			Propagator p = prop.get();
-			if (p == null) {
-				e.getSource().removeAttributeListener(this);
-			} else if (e.getAttribute().equals(Options.sim_rand_attr)) {
-				p.updateRandomness();
-			}
-		}
-	}
-
 	private CircuitState    root; // root of state tree
+	private final Options liveOptions;
+	private final int analysisRandomShift;
 	
 	/** The number of clock cycles to let pass before deciding that the
 	 * circuit is oscillating.
 	 */
 	private int simLimit = 1000;
-
-	/** On average, one out of every 2**simRandomShift propagations
-	 * through a component is delayed one step more than the component
-	 * requests. This noise is intended to address some circuits that would
-	 * otherwise oscillate within Logisim (though they wouldn't oscillate in
-	 * practice). */
-	private volatile int simRandomShift;
 
 	private PriorityQueue<SetData> toProcess = new PriorityQueue<SetData>();
 	private int clock = 0;
@@ -131,19 +104,18 @@ public class Propagator {
 	int id = lastId++;
 
 	public Propagator(CircuitState root) {
-		this.root = root;
-		Listener l = new Listener(this);
-		root.getProject().getOptions().getAttributeSet().addAttributeListener(l);
-		updateRandomness();
+		this(root, root.isDetached() ? null : root.getProject().getOptions(),
+				root.isDetached() ? root.getProject().getOptions().getSimulationRandomShift() : 0);
 	}
-	
-	private void updateRandomness() {
-		Options opts = root.getProject().getOptions();
-		Object rand = opts.getAttributeSet().getValue(Options.sim_rand_attr);
-		int val = ((Integer) rand).intValue();
-		int logVal = 0;
-		while ((1 << logVal) < val) logVal++;
-		simRandomShift = logVal;
+
+	Propagator(CircuitState root, int analysisRandomShift) {
+		this(root, null, analysisRandomShift);
+	}
+
+	private Propagator(CircuitState root, Options liveOptions, int analysisRandomShift) {
+		this.root = root;
+		this.analysisRandomShift = analysisRandomShift;
+		this.liveOptions = liveOptions;
 	}
 
 	public boolean isOscillating() {
@@ -318,7 +290,8 @@ public class Propagator {
 		if (delay <= 0) {
 			delay = 1;
 		}
-		int randomShift = simRandomShift;
+		// Random delay jitter models otherwise oscillating circuits.
+		int randomShift = liveOptions == null ? analysisRandomShift : liveOptions.getSimulationRandomShift();
 		if (randomShift > 0) { // random noise is turned on
 			// multiply the delay by 32 so that the random noise
 			// only changes the delay by 3%.

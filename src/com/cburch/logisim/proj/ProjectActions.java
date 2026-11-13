@@ -349,12 +349,15 @@ public class ProjectActions {
 	}
 
 	public static void doQuit() {
-		Frame top = Projects.getTopFrame();
-		top.savePreferences();
-		
-		for (Project proj : new ArrayList<Project>(Projects.getOpenProjects())) {
+		ArrayList<Project> projects = new ArrayList<Project>(Projects.getOpenProjects());
+		for (Project proj : projects) {
 			if (!proj.confirmClose(Strings.get("confirmQuitTitle"))) return;
 		}
+
+		Frame top = Projects.getTopFrame();
+		if (top != null) top.savePreferences();
+
+		for (Project proj : projects) proj.getFrame().dispose();
 		System.exit(0);
 	}
 }

@@ -9,8 +9,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -110,7 +108,8 @@ public class LogFrame extends LFrame {
 		}
 
 		public void propagationCompleted(SimulatorEvent e) {
-			curModel.propagationCompleted();
+			Model model = curModel;
+			if (model != null && e.getSource() == curSimulator) model.propagationCompleted();
 		}
 
 		public void tickCompleted(SimulatorEvent e) { }
@@ -119,9 +118,8 @@ public class LogFrame extends LFrame {
 	}
 	
 	private Project project;
-	private Simulator curSimulator = null;
-	private Model curModel;
-	private Map<CircuitState,Model> modelMap = new HashMap<CircuitState,Model>();
+	private volatile Simulator curSimulator;
+	private volatile Model curModel;
 	private MyListener myListener = new MyListener();
 	private WindowMenuManager windowManager;
 	
@@ -178,30 +176,31 @@ public class LogFrame extends LFrame {
 	}
 	
 	private void setSimulator(Simulator value, CircuitState state) {
-		if ((value == null) == (curModel == null)) {
-			if (value == null || value.getCircuitState() == curModel.getCircuitState()) return;
-		}
+		CircuitState root = state == null ? null : state.getSimulationRoot();
 
 		LogisimMenuBar menubar = (LogisimMenuBar) getJMenuBar();
 		menubar.setCircuitState(value, state);
 
-		if (curSimulator != null) curSimulator.removeSimulatorListener(myListener);
-		if (curModel != null) curModel.setSelected(this, false);
-
 		Model oldModel = curModel;
+		if (curSimulator == value && (oldModel == null ? root == null : root == oldModel.getCircuitState())) {
+			return;
+		}
+		if (curSimulator != null) curSimulator.removeSimulatorListener(myListener);
+		if (oldModel != null) oldModel.setSelected(false);
+
 		Model data = null;
-		if (value != null) {
-			data = modelMap.get(value.getCircuitState());
+		if (root != null) {
+			data = (Model) root.getLogData();
 			if (data == null) {
-				data = new Model(value.getCircuitState());
-				modelMap.put(data.getCircuitState(), data);
+				data = new Model(root);
+				root.setLogData(data);
 			}
 		}
 		curSimulator = value;
 		curModel = data;
 
 		if (curSimulator != null) curSimulator.addSimulatorListener(myListener);
-		if (curModel != null) curModel.setSelected(this, true);
+		if (curModel != null) curModel.setSelected(true);
 		setTitle(computeTitle(curModel, project));
 		if (panels != null) {
 			for (int i = 0; i < panels.length; i++) {
@@ -216,6 +215,19 @@ public class LogFrame extends LFrame {
 			windowManager.frameOpened(this);
 		}
 		super.setVisible(value);
+	}
+
+	@Override
+	public void dispose() {
+		windowManager.frameClosed(this);
+		project.removeProjectListener(myListener);
+		project.removeLibraryListener(myListener);
+		project.removeProjectListener(windowManager);
+		project.removeLibraryListener(windowManager);
+		LocaleManager.removeLocaleListener(myListener);
+		setSimulator(null, null);
+		((LogisimMenuBar) getJMenuBar()).dispose();
+		super.dispose();
 	}
 	
 	LogPanel[] getPrefPanels() {

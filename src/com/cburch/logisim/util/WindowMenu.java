@@ -70,7 +70,6 @@ public class WindowMenu extends JMenu {
 
 	public WindowMenu(JFrame owner) {
 		this.owner = owner;
-		WindowMenuManager.addMenu(this);
 		
 		int menuMask = getToolkit().getMenuShortcutKeyMask();
 		minimize.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, menuMask));
@@ -89,8 +88,19 @@ public class WindowMenu extends JMenu {
 		computeEnabled();
 		computeContents();
 		
+		myListener.localeChanged();
+	}
+
+	public void register() {
+		WindowMenuManager.addMenu(this);
+		computeEnabled();
 		LocaleManager.addLocaleListener(myListener);
 		myListener.localeChanged();
+	}
+
+	public void unregister() {
+		LocaleManager.removeLocaleListener(myListener);
+		WindowMenuManager.removeMenu(this);
 	}
 	
 	void addMenuItem(Object source, WindowMenuItem item, boolean persistent) {
@@ -101,7 +111,7 @@ public class WindowMenu extends JMenu {
 	}
 	
 	void removeMenuItem(Object source, JRadioButtonMenuItem item) {
-		if (transientItems.remove(item)) {
+		if (transientItems.remove(item) || persistentItems.remove(item)) {
 			item.removeActionListener(myListener);
 		}
 		computeContents();
@@ -109,9 +119,10 @@ public class WindowMenu extends JMenu {
 	
 	void computeEnabled() {
 		WindowMenuItemManager currentManager = WindowMenuManager.getCurrentManager();
-		minimize.setEnabled(currentManager != null);
-		zoom.setEnabled(currentManager != null);
-		close.setEnabled(currentManager != null);
+		boolean enabled = owner != null && currentManager != null;
+		minimize.setEnabled(enabled);
+		zoom.setEnabled(enabled);
+		close.setEnabled(enabled);
 	}
 	
 	void setNullItemSelected(boolean value) {

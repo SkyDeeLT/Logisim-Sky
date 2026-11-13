@@ -17,7 +17,7 @@ class LogThread extends Thread implements ModelListener {
 	private static final int IDLE_UNTIL_CLOSE = 10000;
 	
 	private Model model;
-	private boolean canceled = false;
+	private volatile boolean canceled;
 	private Object lock = new Object();
 	private PrintWriter writer = null;
 	private boolean headerDirty = true;
@@ -61,6 +61,8 @@ class LogThread extends Thread implements ModelListener {
 				writer = null;
 			}
 		}
+		model.removeModelListener(this);
+		interrupt();
 	}
 
 	public void selectionChanged(ModelEvent event) {

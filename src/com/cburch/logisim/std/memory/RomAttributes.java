@@ -3,6 +3,7 @@
 
 package com.cburch.logisim.std.memory;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.WeakHashMap;
@@ -20,11 +21,16 @@ class RomAttributes extends AbstractAttributeSet {
 	
 	private static WeakHashMap<MemContents,RomContentsListener> listenerRegistry
 		= new WeakHashMap<MemContents,RomContentsListener>();
-	private static WeakHashMap<MemContents,HexFrame> windowRegistry
-		= new WeakHashMap<MemContents,HexFrame>();
+	private static WeakHashMap<MemContents,WeakReference<HexFrame>> windowRegistry
+		= new WeakHashMap<MemContents,WeakReference<HexFrame>>();
 
 	static void register(MemContents value, Project proj) {
-		if (proj == null || listenerRegistry.containsKey(value)) return;
+		if (proj == null) return;
+		RomContentsListener oldListener = listenerRegistry.get(value);
+		if (oldListener != null) {
+			if (oldListener.getProject() != null) return;
+			value.removeHexModelListener(oldListener);
+		}
 		RomContentsListener l = new RomContentsListener(proj);
 		value.addHexModelListener(l);
 		listenerRegistry.put(value, l);
@@ -32,10 +38,11 @@ class RomAttributes extends AbstractAttributeSet {
 	
 	static HexFrame getHexFrame(MemContents value, Project proj) {
 		synchronized(windowRegistry) {
-			HexFrame ret = windowRegistry.get(value);
-			if (ret == null) {
+			WeakReference<HexFrame> ref = windowRegistry.get(value);
+			HexFrame ret = ref == null ? null : ref.get();
+			if (ret == null || !ret.isDisplayable()) {
 				ret = new HexFrame(proj, value);
-				windowRegistry.put(value, ret);
+				windowRegistry.put(value, new WeakReference<HexFrame>(ret));
 			}
 			return ret;
 		}

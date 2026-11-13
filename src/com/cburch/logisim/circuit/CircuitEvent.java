@@ -16,11 +16,21 @@ public class CircuitEvent {
 	private int action;
 	private Circuit circuit;
 	private Object data;
+	private final boolean simulationChange;
 
 	CircuitEvent(int action, Circuit circuit, Object data) {
+		this(action, circuit, data, false);
+	}
+
+	CircuitEvent(int action, Circuit circuit, Object data, boolean simulationChange) {
 		this.action = action;
 		this.circuit = circuit;
 		this.data = data;
+		this.simulationChange = simulationChange;
+	}
+
+	public boolean isSimulationChange() {
+		return simulationChange;
 	}
 
 	// access methods

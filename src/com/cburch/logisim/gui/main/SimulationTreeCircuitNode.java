@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashSet;
 
 import javax.swing.tree.TreeNode;
 
@@ -19,6 +20,7 @@ import com.cburch.logisim.comp.Component;
 import com.cburch.logisim.comp.ComponentFactory;
 import com.cburch.logisim.data.AttributeEvent;
 import com.cburch.logisim.data.AttributeListener;
+import com.cburch.logisim.data.AttributeSet;
 import com.cburch.logisim.instance.StdAttr;
 
 class SimulationTreeCircuitNode extends SimulationTreeNode
@@ -44,12 +46,23 @@ class SimulationTreeCircuitNode extends SimulationTreeNode
 		this.subcircComp = subcircComp;
 		this.children = new ArrayList<TreeNode>();
 		circuitState.getCircuit().addCircuitListener(this);
-		if (subcircComp != null) {
-			subcircComp.getAttributeSet().addAttributeListener(this);
-		} else {
-			circuitState.getCircuit().getStaticAttributes().addAttributeListener(this);
-		}
+		getObservedAttributes().addAttributeListener(this);
 		computeChildren();
+	}
+
+	private AttributeSet getObservedAttributes() {
+		return subcircComp == null ? circuitState.getCircuit().getStaticAttributes()
+				: subcircComp.getAttributeSet();
+	}
+
+	void close() {
+		circuitState.getCircuit().removeCircuitListener(this);
+		getObservedAttributes().removeAttributeListener(this);
+		for (TreeNode child : children) {
+			if (child instanceof SimulationTreeCircuitNode) {
+				((SimulationTreeCircuitNode) child).close();
+			}
+		}
 	}
 	
 	public CircuitState getCircuitState() {
@@ -160,6 +173,12 @@ class SimulationTreeCircuitNode extends SimulationTreeNode
 		}
 		
 		if (!children.equals(newChildren)) {
+			HashSet<TreeNode> kept = new HashSet<TreeNode>(newChildren);
+			for (TreeNode child : children) {
+				if (child instanceof SimulationTreeCircuitNode && !kept.contains(child)) {
+					((SimulationTreeCircuitNode) child).close();
+				}
+			}
 			children = newChildren;
 			return true;
 		} else {

@@ -26,7 +26,7 @@ import com.cburch.logisim.gui.start.Startup;
 public class Main {
 	public static final LogisimVersion VERSION = LogisimVersion.get(2, 7, 1);
 	public static final String VERSION_NAME = VERSION.toString();
-	public static final String SKY_UI_VERSION = "1.0";
+	public static final String SKY_UI_VERSION = "1.0.1";
 	public static final int COPYRIGHT_YEAR = 2011;
 
 	public static void main(String[] args) {

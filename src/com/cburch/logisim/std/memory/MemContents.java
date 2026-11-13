@@ -39,7 +39,7 @@ class MemContents implements Cloneable, HexModel {
 
 	public void removeHexModelListener(HexModelListener l) {
 		if (listeners == null) return;
-		listeners.add(l);
+		listeners.remove(l);
 		if (listeners.isEmpty()) listeners = null; 
 	}
 	

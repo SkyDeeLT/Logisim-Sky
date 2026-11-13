@@ -111,18 +111,8 @@ public class AttrTable extends JPanel implements LocaleListener {
 		}
 	}
 
-	/** JTable can retain a Metal background across live LAF changes; repair it at paint time. */
 	private static class ThemeTable extends JTable {
 		ThemeTable(TableModel model) { super(model); setFillsViewportHeight(true); }
-		@Override
-		protected void paintComponent(Graphics g) {
-			setBackground(DarkTheme.INPUT_BACKGROUND);
-			setForeground(DarkTheme.FOREGROUND);
-			setGridColor(DarkTheme.BORDER);
-			setSelectionBackground(DarkTheme.SELECTION);
-			setSelectionForeground(DarkTheme.FOREGROUND);
-			super.paintComponent(g);
-		}
 	}
 
 	private static class MyDialog extends JDialogOk {
@@ -526,8 +516,20 @@ public class AttrTable extends JPanel implements LocaleListener {
 		
 		this.add(headerPanel, BorderLayout.PAGE_START);
 		this.add(tableScroll, BorderLayout.CENTER);
+		localeChanged();
+	}
+
+	@Override
+	public void addNotify() {
+		super.addNotify();
 		LocaleManager.addLocaleListener(this);
 		localeChanged();
+	}
+
+	@Override
+	public void removeNotify() {
+		LocaleManager.removeLocaleListener(this);
+		super.removeNotify();
 	}
 	
 	private void syncThemeColors() {

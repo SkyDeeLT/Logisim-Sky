@@ -4,6 +4,7 @@
 package com.cburch.logisim.circuit;
 
 import java.awt.Font;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 
@@ -85,6 +86,22 @@ public class CircuitAttributes extends AbstractAttributeSet {
 			subcircInstance.fireInvalidated();
 		}
 	}
+
+	private static class WeakAttributeListener implements AttributeListener {
+		private final WeakReference<AttributeListener> listener;
+
+		WeakAttributeListener(AttributeListener listener) {
+			this.listener = new WeakReference<AttributeListener>(listener);
+		}
+
+		public void attributeListChanged(AttributeEvent e) { }
+
+		public void attributeValueChanged(AttributeEvent e) {
+			AttributeListener target = listener.get();
+			if (target == null) e.getSource().removeAttributeListener(this);
+			else target.attributeValueChanged(e);
+		}
+	}
 	
 	static AttributeSet createBaseAttrs(Circuit source, String name) {
 		AttributeSet ret = AttributeSets.fixedSet(STATIC_ATTRS, STATIC_DEFAULTS);
@@ -116,7 +133,7 @@ public class CircuitAttributes extends AbstractAttributeSet {
 		subcircInstance = value;
 		if (subcircInstance != null && listener == null) {
 			listener = new MyListener();
-			source.getStaticAttributes().addAttributeListener(listener);
+			source.getStaticAttributes().addAttributeListener(new WeakAttributeListener(listener));
 			source.getAppearance().addCircuitAppearanceListener(listener);
 		}
 	}
